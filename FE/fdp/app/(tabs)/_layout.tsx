@@ -13,16 +13,33 @@ export default function TabLayout() {
             screenOptions={{
                 tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
                 headerShown: false,
-                // Remove tabBar from screenOptions
             }}
-            tabBar={(props) => <BottomNav {...props} />} // Move tabBar here
+            tabBar={(props) => <BottomNav {...props} />}
         >
             <Tabs.Screen
-                name="index"
+                name="screens/Home"
                 options={{
                     title: 'Home',
                     tabBarIcon: ({ focused, color, size }) => (
                         <Text style={{ color, fontSize: size }}>{focused ? '🏠' : '🏠'}</Text>
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="screens/UserHome"
+                options={{
+                    title: 'User',
+                    tabBarIcon: ({ focused, color, size }) => (
+                        <Text style={{ color, fontSize: size }}>{focused ? '👤' : '👤'}</Text>
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="screens/DoctorHome"
+                options={{
+                    title: 'Doctor',
+                    tabBarIcon: ({ focused, color, size }) => (
+                        <Text style={{ color, fontSize: size }}>{focused ? '🩺' : '🩺'}</Text>
                     ),
                 }}
             />
