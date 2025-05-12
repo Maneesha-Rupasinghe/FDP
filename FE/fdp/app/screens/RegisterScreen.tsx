@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Snackbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -16,8 +16,8 @@ const RegisterScreen = () => {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // Handle the registration logic (placeholder)
   const handleRegister = () => {
     setIsLoading(true);
     if (!email || !username || !password) {
@@ -26,47 +26,60 @@ const RegisterScreen = () => {
       showSnackbar('Doctor Registration Number is required', 'error');
     } else {
       showSnackbar('Registration placeholder (connect to FastAPI later)', 'success');
-      router.replace('/screens/LoginScreen');
+      setTimeout(() => {
+        router.replace('/screens/LoginScreen');
+      }, 100);
     }
     setIsLoading(false);
   };
 
-  // Toggle password visibility
+  const handleNavigateToLogin = () => {
+    setIsNavigating(true);
+    setTimeout(() => {
+      router.replace('/screens/LoginScreen');
+      setIsNavigating(false);
+    }, 100);
+  };
+
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
-  // Function to show Snackbar messages
   const showSnackbar = (message: string, type: 'success' | 'error') => {
     setSnackbarMessage(message);
     setSnackbarType(type);
     setSnackbarVisible(true);
   };
 
-  // Determine the image based on the selected role
   const getRoleImage = () => {
     return role === 'doctor'
-      ? require('../assets/images/doctor.webp') // Reuse vet image for doctor
-      : require('../assets/images/patient.png'); // Default for regular user
+      ? require('../assets/images/doctor.webp')
+      : require('../assets/images/patient.png');
   };
+
+  if (isNavigating) {
+    return (
+      <View className="flex-1 justify-center items-center bg-[#FFF2F2]">
+        <Text className="text-lg text-[#2D336B]">Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: '#FFF2F2' }} showsVerticalScrollIndicator={false}>
       <View className="flex flex-col items-center p-4">
-        {/* Image Section */}
-        <View className="justify-start items-center w-full mt-8">
+        <View className="justify-center items-center w-full mt-8">
           <Image
             source={getRoleImage()}
-            className="w-full h-52 rounded-lg object-cover shadow-md"
+            className="w-full h-72 rounded-lg object-contain shadow-md"
+            onError={(e) => console.log('Image error:', e.nativeEvent.error)}
           />
         </View>
 
-        {/* Registration Title Section */}
         <View className="mt-12">
           <Text className="text-4xl font-extrabold text-[#2D336B] text-center">Register</Text>
         </View>
 
-        {/* Toggle between Regular User and Doctor */}
         <View className="flex flex-row mt-4">
           <TouchableOpacity
             onPress={() => setRole('regular')}
@@ -82,7 +95,6 @@ const RegisterScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Email Input Field */}
         <View className="mt-6 w-full">
           <Text className="text-lg text-[#2D336B] mb-2">Email</Text>
           <TextInput
@@ -94,7 +106,6 @@ const RegisterScreen = () => {
           />
         </View>
 
-        {/* Username Input Field */}
         <View className="mt-6 w-full">
           <Text className="text-lg text-[#2D336B] mb-2">Username</Text>
           <TextInput
@@ -106,7 +117,6 @@ const RegisterScreen = () => {
           />
         </View>
 
-        {/* Password Input Field */}
         <View className="mt-6 w-full">
           <Text className="text-lg text-[#2D336B] mb-2">Password</Text>
           <View className="relative">
@@ -131,7 +141,6 @@ const RegisterScreen = () => {
           </View>
         </View>
 
-        {/* Doctor Registration Number Input (if Doctor role is selected) */}
         {role === 'doctor' && (
           <View className="mt-6 w-full">
             <Text className="text-lg text-[#2D336B] mb-2">Doctor Reg Number</Text>
@@ -145,7 +154,6 @@ const RegisterScreen = () => {
           </View>
         )}
 
-        {/* Register Button */}
         <TouchableOpacity
           onPress={handleRegister}
           className={`mt-8 bg-[#7886C7] p-4 w-full rounded-lg items-center ${isLoading ? 'opacity-50' : ''}`}
@@ -158,13 +166,12 @@ const RegisterScreen = () => {
 
         <View className="flex flex-row justify-center mt-4 gap-x-2">
           <Text className="text-[#2D336B]">Already have an account?</Text>
-          <Link className="text-[#7886C7] font-semibold" href={'/screens/LoginScreen'}>
-            Sign In
-          </Link>
+          <TouchableOpacity onPress={handleNavigateToLogin}>
+            <Text className="text-[#7886C7] font-semibold">Sign In</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Snackbar for displaying success or error messages */}
       <View className="absolute bottom-5 left-0 right-0">
         <Snackbar
           visible={snackbarVisible}

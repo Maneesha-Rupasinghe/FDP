@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Snackbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Feather';
+
 
 const LoginScreen = () => {
     const router = useRouter();
@@ -13,6 +14,7 @@ const LoginScreen = () => {
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
+    const [isNavigating, setIsNavigating] = useState(false);
 
     const handleLogin = () => {
         setIsLoading(true);
@@ -20,15 +22,19 @@ const LoginScreen = () => {
             showSnackbar('Please enter email and password', 'error');
         } else {
             showSnackbar('Login placeholder (connect to FastAPI later)', 'success');
-            // Simulate role (replace with API response later)
-            const role: 'doctor' | 'regular' = 'regular' as 'doctor' | 'regular'; // Placeholder
-            if (role === 'doctor') {
-                router.replace('/(tabs)/DoctorHome');
-            } else {
-                router.replace('/(tabs)/UserHome');
-            }
+            setTimeout(() => {
+                router.replace('/screens/UserHome');
+            }, 100);
         }
         setIsLoading(false);
+    };
+
+    const handleNavigateToRegister = () => {
+        setIsNavigating(true);
+        setTimeout(() => {
+            router.replace('/screens/RegisterScreen');
+            setIsNavigating(false);
+        }, 100);
     };
 
     const togglePasswordVisibility = () => {
@@ -41,6 +47,14 @@ const LoginScreen = () => {
         setSnackbarVisible(true);
     };
 
+    if (isNavigating) {
+        return (
+            <View className="flex-1 justify-center items-center bg-[#FFF2F2]">
+                <Text className="text-lg text-[#2D336B]">Loading...</Text>
+            </View>
+        );
+    }
+
     return (
         <KeyboardAvoidingView
             style={{ flex: 1, backgroundColor: '#FFF2F2' }}
@@ -51,20 +65,18 @@ const LoginScreen = () => {
                 contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Image Section */}
-                <View className="justify-start items-center w-full mt-8">
+                <View className="justify-center items-center w-full mt-8">
                     <Image
                         source={require('../assets/images/login.jpeg')}
-                        className="w-full h-48 rounded-lg object-cover shadow-md"
+                        className="w-full h-72 rounded-lg object-contain shadow-md"
+                        onError={(e) => console.log('Image error:', e.nativeEvent.error)}
                     />
                 </View>
 
-                {/* Login Title Section */}
                 <View className="mt-10">
                     <Text className="text-4xl font-extrabold text-[#2D336B] text-center">Login</Text>
                 </View>
 
-                {/* Email Input Field */}
                 <View className="mt-8 w-full">
                     <Text className="text-lg text-[#2D336B] mb-2">Email</Text>
                     <TextInput
@@ -76,7 +88,6 @@ const LoginScreen = () => {
                     />
                 </View>
 
-                {/* Password Input Field */}
                 <View className="mt-6 w-full">
                     <Text className="text-lg text-[#2D336B] mb-2">Password</Text>
                     <View className="relative">
@@ -101,7 +112,6 @@ const LoginScreen = () => {
                     </View>
                 </View>
 
-                {/* Login Button */}
                 <TouchableOpacity
                     onPress={handleLogin}
                     className={`mt-10 bg-[#7886C7] p-4 w-full rounded-lg items-center shadow-lg ${isLoading ? 'opacity-50' : ''}`}
@@ -112,16 +122,14 @@ const LoginScreen = () => {
                     </Text>
                 </TouchableOpacity>
 
-                {/* Register Link */}
                 <View className="flex flex-row justify-center mt-6 gap-x-2">
                     <Text className="text-[#2D336B]">Don&apos;t have an account?</Text>
-                    <Link className="text-[#7886C7] font-semibold" href={'/screens/RegisterScreen'}>
-                        Register
-                    </Link>
+                    <TouchableOpacity onPress={handleNavigateToRegister}>
+                        <Text className="text-[#7886C7] font-semibold">Register</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
 
-            {/* Snackbar for displaying success or error messages */}
             <View className="absolute bottom-5 left-0 right-0">
                 <Snackbar
                     visible={snackbarVisible}

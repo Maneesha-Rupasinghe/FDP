@@ -1,12 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, Animated, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { usePathname } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons'; // Install: npm install @expo/vector-icons
-import { useColorScheme } from 'react-native';
-
-// Install dependencies if not already present:
-// npm install @expo/vector-icons react-native-reanimated
+import Icon from 'react-native-vector-icons/Feather';
 
 interface TabBarProps {
     state: { index: number; routes: { name: string }[] };
@@ -16,110 +12,71 @@ interface TabBarProps {
 export function BottomNav({ state, navigation }: TabBarProps) {
     const router = useRouter();
     const pathname = usePathname();
-    const colorScheme = useColorScheme();
-    const fadeAnim = new Animated.Value(0); // For animation
-
-    React.useEffect(() => {
-        Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
-    }, [state.index]);
 
     const tabs = [
-        { name: 'index', label: 'Home', icon: 'home' },
-        { name: 'explore', label: 'Explore', icon: 'search' },
-        { name: 'profile', label: 'Profile', icon: 'user' },
-        { name: 'settings', label: 'Settings', icon: 'cog' },
+        { name: 'index', label: 'Home', icon: 'home', route: '/screens/Home' },
+        { name: 'explore', label: 'Explore', icon: 'search', route: '/screens/explore' },
+        { name: 'profile', label: 'Profile', icon: 'user', route: '/screens/profile' },
+        { name: 'settings', label: 'Settings', icon: 'settings', route: '/screens/settings' },
+        // { name: 'doctor', label: 'Doctor', icon: 'user-md', route: '/screens/DoctorHome' },
+        // { name: 'user', label: 'User', icon: 'user', route: '/screens/UserHome' },
     ];
 
-    const isDarkMode = colorScheme === 'dark';
-    const backgroundColor = isDarkMode ? '#1F2937' : '#FFF2F2';
-    const activeColor = '#7886C7';
-    const inactiveColor = isDarkMode ? '#A9B5DF' : '#2D336B';
-    const borderColor = isDarkMode ? '#4B5563' : '#A9B5DF';
+    const activeTab = tabs.findIndex(tab => pathname === tab.route);
 
     return (
-        <Animated.View
-            style={[
-                styles.container,
-                {
-                    backgroundColor: backgroundColor,
-                    borderTopColor: borderColor,
-                    opacity: fadeAnim,
-                },
-            ]}
-        >
-            {tabs.map((tab, index) => {
-                const isFocused = state.index === index;
-                return (
-                    <TouchableOpacity
-                        key={tab.name}
-                        style={styles.tab}
-                        onPress={() => {
-                            const routes: Record<string, string> = {
-                                index: '/(tabs)/screens/Home',
-                                explore: '/(tabs)/screens/explore',
-                                profile: '/(tabs)/screens/profile',
-                                settings: '/(tabs)/screens/settings',
-                            };
-                            router.push(routes[tab.name] as any); // Type assertion as workaround
-                        }}
-                    >
-                        <FontAwesome
-                            name={tab.icon as any}
-                            size={24}
-                            color={isFocused ? activeColor : inactiveColor}
-                        />
-                        <Text
-                            style={[
-                                styles.label,
-                                {
-                                    color: isFocused ? activeColor : inactiveColor,
-                                    fontWeight: isFocused ? '600' : '400',
-                                },
-                            ]}
+        <View className="absolute bottom-0 left-0 right-0 z-50 pb-2 px-2">
+            <View className="flex-row justify-around items-center bg-[#FFF2F2] dark:bg-[#27548A] py-3 px-2 mx-2 rounded-3xl shadow-2xl">
+                {tabs.map((tab, index) => {
+                    const isActive = activeTab === index;
+
+                    return (
+                        <TouchableOpacity
+                            key={tab.name}
+                            className="flex items-center justify-center"
+                            onPress={() => {
+                                router.push(tab.route as any);
+                            }}
                         >
-                            {tab.label}
-                        </Text>
-                        {isFocused && (
-                            <View style={[styles.activeIndicator, { backgroundColor: activeColor }]} />
-                        )}
-                    </TouchableOpacity>
-                );
-            })}
-        </Animated.View>
+                            <View
+                                className={`
+                  p-3 rounded-full transition-all duration-300 ease-in-out
+                  ${isActive ? `bg-opacity-20` : 'bg-opacity-0'}
+                `}
+                                style={{
+                                    backgroundColor: isActive ? `#7886C720` : 'transparent',
+                                }}
+                            >
+                                <Icon
+                                    name={tab.icon}
+                                    size={24}
+                                    color={isActive ? '#7886C7' : '#A9B5DF'}
+                                    style={{
+                                        transform: [{ scale: isActive ? 1.1 : 1 }],
+                                    }}
+                                />
+                            </View>
+                            {isActive && (
+                                <View
+                                    className="absolute -bottom-1 w-1 h-1 rounded-full"
+                                    style={{ backgroundColor: '#7886C7' }}
+                                />
+                            )}
+                            <Text
+                                className={`text-xs mt-1 transition-all duration-300 ease-in-out text-[${isActive ? '#7886C7' : '#A9B5DF'}] ${isActive
+                                    ? 'font-bold'
+                                    : 'font-normal text-gray-500'
+                                    }`}
+                                style={{
+                                    color: isActive ? '#7886C7' : '#A9B5DF',
+                                }}
+                            >
+                                {tab.label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+        </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        paddingVertical: 8,
-        borderTopWidth: 1,
-        elevation: 8, // Shadow for Android
-        shadowColor: '#000', // Shadow for iOS
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    tab: {
-        alignItems: 'center',
-        padding: 6,
-    },
-    label: {
-        fontSize: 12,
-        marginTop: 4,
-        textAlign: 'center',
-    },
-    activeIndicator: {
-        position: 'absolute',
-        bottom: -2,
-        height: 2,
-        width: '60%',
-        borderRadius: 1,
-    },
-});

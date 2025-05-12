@@ -17,7 +17,7 @@ export default function TabLayout() {
             tabBar={(props) => <BottomNav {...props} />}
         >
             <Tabs.Screen
-                name="screens/Home"
+                name="Home"
                 options={{
                     title: 'Home',
                     tabBarIcon: ({ focused, color, size }) => (
