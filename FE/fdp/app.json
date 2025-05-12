@@ -6,6 +6,9 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fdp",
+    "extra": {
+      "googleClientId": "766980373607-msim63tvdgvlgkv2bsm4e2ev3pbp0s10.apps.googleusercontent.com"
+    },
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

@@ -1,9 +1,14 @@
+# BE/main.py
 from fastapi import FastAPI
 from config.database import db, test_connection
 from fastapi.encoders import jsonable_encoder
 from bson.objectid import ObjectId
+from routes.auth import router as auth_router
 
 app = FastAPI()
+
+# Include authentication routes
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 
 @app.get("/test")

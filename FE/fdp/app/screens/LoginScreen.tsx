@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+// app/screens/LoginScreen.tsx
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Snackbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Feather';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 
+// Initialize WebBrowser for OAuth2 redirects
+WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
     const router = useRouter();
@@ -16,15 +22,85 @@ const LoginScreen = () => {
     const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
     const [isNavigating, setIsNavigating] = useState(false);
 
-    const handleLogin = () => {
+    // Google OAuth2 setup
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        clientId: Constants.expoConfig?.extra?.googleClientId,
+        iosClientId: Constants.expoConfig?.extra?.googleClientId,
+        androidClientId: Constants.expoConfig?.extra?.googleClientId,
+        redirectUri: `https://auth.expo.io/@maneesha99/fdp`,
+        scopes: ['profile', 'email'],
+    });
+
+    useEffect(() => {
+        if (response?.type === 'success') {
+            const { authentication } = response;
+            handleGoogleLogin(authentication.accessToken);
+        }
+    }, [response]);
+
+    const handleGoogleLogin = async (accessToken: string) => {
+        setIsLoading(true);
+        try {
+            const userInfoResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            const userInfo = await userInfoResponse.json();
+
+            const registerResponse = await fetch('http://localhost:8000/auth/register-oauth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: userInfo.email,
+                    username: userInfo.name,
+                    role: 'regular',
+                }),
+            });
+
+            const data = await registerResponse.json();
+            if (registerResponse.ok) {
+                showSnackbar('Google Login successful', 'success');
+                setTimeout(() => {
+                    router.replace('/screens/UserHome');
+                }, 100);
+            } else {
+                showSnackbar(data.detail || 'Google Login failed', 'error');
+            }
+        } catch (error) {
+            showSnackbar('Google Login error', 'error');
+            console.error(error);
+        }
+        setIsLoading(false);
+    };
+
+    const handleEmailPasswordLogin = async () => {
         setIsLoading(true);
         if (!email || !password) {
             showSnackbar('Please enter email and password', 'error');
         } else {
-            showSnackbar('Login placeholder (connect to FastAPI later)', 'success');
-            setTimeout(() => {
-                router.replace('/screens/UserHome');
-            }, 100);
+            try {
+                const response = await fetch('http://localhost:8000/auth/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        username: email,
+                        password: password,
+                    }).toString(),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showSnackbar('Login successful', 'success');
+                    // Store token in AsyncStorage if needed (e.g., using expo-secure-store)
+                    setTimeout(() => {
+                        router.replace('/screens/UserHome');
+                    }, 100);
+                } else {
+                    showSnackbar(data.detail || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showSnackbar('Login error', 'error');
+                console.error(error);
+            }
         }
         setIsLoading(false);
     };
@@ -113,13 +189,21 @@ const LoginScreen = () => {
                 </View>
 
                 <TouchableOpacity
-                    onPress={handleLogin}
+                    onPress={handleEmailPasswordLogin}
                     className={`mt-10 bg-[#7886C7] p-4 w-full rounded-lg items-center shadow-lg ${isLoading ? 'opacity-50' : ''}`}
                     disabled={isLoading}
                 >
                     <Text className="text-white text-lg font-semibold">
                         {isLoading ? 'Logging In...' : 'Login'}
                     </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => promptAsync()}
+                    className="mt-4 bg-[#4285F4] p-4 w-full rounded-lg items-center shadow-lg"
+                    disabled={!request || isLoading}
+                >
+                    <Text className="text-white text-lg font-semibold">Login with Google</Text>
                 </TouchableOpacity>
 
                 <View className="flex flex-row justify-center mt-6 gap-x-2">

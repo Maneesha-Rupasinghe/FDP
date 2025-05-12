@@ -1,3 +1,4 @@
+// app/screens/RegisterScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,17 +19,39 @@ const RegisterScreen = () => {
   const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setIsLoading(true);
     if (!email || !username || !password) {
       showSnackbar('All fields are required', 'error');
     } else if (role === 'doctor' && !doctorRegNo) {
       showSnackbar('Doctor Registration Number is required', 'error');
     } else {
-      showSnackbar('Registration placeholder (connect to FastAPI later)', 'success');
-      setTimeout(() => {
-        router.replace('/screens/LoginScreen');
-      }, 100);
+      try {
+        const response = await fetch('http://localhost:8000/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            username,
+            password,
+            role,
+            doctor_reg_no: role === 'doctor' ? doctorRegNo : null,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showSnackbar('Registration successful', 'success');
+          setTimeout(() => {
+            router.replace('/screens/LoginScreen');
+          }, 100);
+        } else {
+          showSnackbar(data.detail || 'Registration failed', 'error');
+        }
+      } catch (error) {
+        showSnackbar('Registration error', 'error');
+        console.error(error);
+      }
     }
     setIsLoading(false);
   };
