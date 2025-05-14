@@ -1,7 +1,8 @@
-# BE/main.py
 from fastapi import FastAPI
-from config.database import db, test_connection
+from config.database import db
+from config.database import test_connection
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from bson.objectid import ObjectId
 from routes.auth import router as auth_router
 
@@ -10,13 +11,22 @@ app = FastAPI()
 # Include authentication routes
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+
+# Test endpoint
 @app.get("/test")
 async def test_endpoint():
-    return {"test endpoint"}
+    return {"message": "Test endpoint"}
 
 
-# Correct way to handle custom JSON encoding for ObjectId
+# Custom JSON encoder for ObjectId
 def custom_json_encoder(obj):
     if isinstance(obj, ObjectId):
         return str(obj)
