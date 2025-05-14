@@ -4,12 +4,14 @@ from config.database import test_connection
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from bson.objectid import ObjectId
-from routes.auth import router as auth_router
+from auth.auth import router
+from auth.chat import router as chat_router
 
 app = FastAPI()
 
 # Include authentication routes
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(router, prefix="/auth")
+app.include_router(chat_router)
 
 app.add_middleware(
     CORSMiddleware,

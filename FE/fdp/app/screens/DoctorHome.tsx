@@ -1,11 +1,11 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
-import ProfileScreen from '../components/vet/ProfileScreen';
-import HomeScreen from '../components/vet/HomeScreen';
-import VetAppointments from '../components/vet/AppointmentScreen';
-import VetCalendar from '../components/vet/VetCalendar';
-import VetReminders from '../components/vet/VetReminders';
+import ProfileScreen from '../components/Doctor/ProfileScreen';
+import HomeScreen from '../components/Doctor/HomeScreen';
+import VetAppointments from '../components/Doctor/AppointmentScreen';
+import DoctorChatListScreen from '../components/Doctor/DoctorChatListScreen';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -35,38 +35,38 @@ const VetHome = () => {
         tabBarIconStyle: {
           marginTop: 5,
         },
-     
+
         headerStyle: {
           backgroundColor: '#FBF8EF',
-          elevation: 0, 
-          shadowOpacity: 0, 
-          borderBottomWidth: 0, 
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 0,
         },
         headerTitleStyle: {
-          fontSize: 32, 
+          fontSize: 32,
           fontWeight: 'bold',
-          color: '#3E4241', 
-          textTransform: 'uppercase', 
+          color: '#3E4241',
+          textTransform: 'uppercase',
         },
         headerTitleContainerStyle: {
-          paddingHorizontal: 16, 
-          paddingTop: 10, 
+          paddingHorizontal: 16,
+          paddingTop: 10,
         },
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={VetCalendar}
+        name="Chat"
+        component={DoctorChatListScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <Icon name="home" size={size + 4} color={color} />
           ),
-          headerTitle: 'Home 📅',
+          headerTitle: 'Chat 📅',
           headerTitleStyle: {
             fontSize: 28,
             fontWeight: 'bold',
-            color: '#black', 
+            color: '#black',
             textTransform: 'uppercase',
             letterSpacing: 2,
           },
@@ -90,7 +90,7 @@ const VetHome = () => {
           },
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Reminders"
         component={VetReminders}
         options={{
@@ -107,7 +107,7 @@ const VetHome = () => {
             letterSpacing: 2,
           },
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

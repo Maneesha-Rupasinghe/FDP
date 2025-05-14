@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useFocusEffect } from 'expo-router';
 import Icon from 'react-native-vector-icons/Feather';
-import { BASE_URL } from "../config/config"
 
 const RegisterScreen = ({ navigation }: any) => {
     const router = useRouter();
@@ -23,16 +22,45 @@ const RegisterScreen = ({ navigation }: any) => {
 
     const firestore = getFirestore();
 
+    // Clear form inputs when screen is focused (e.g., after logout)
+    useFocusEffect(
+        React.useCallback(() => {
+            setEmail('');
+            setUsername('');
+            setPassword('');
+            setMedicalLicenseNo('');
+            setRole('user');
+            setIsPasswordVisible(false);
+        }, [])
+    );
+
+    // Validate email format
+    const isValidEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
     // Handle the registration logic
     const handleRegister = async () => {
         setIsLoading(true);
-        if (!email || !username || !password) {
+        const trimmedEmail = email.trim();
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
+
+        // Client-side validation
+        if (!trimmedEmail || !trimmedUsername || !trimmedPassword) {
             showSnackbar('All fields are required', 'error');
             setIsLoading(false);
             return;
         }
 
-        if (role === 'doctor' && !medicalLicenseNo) {
+        if (!isValidEmail(trimmedEmail)) {
+            showSnackbar('Please enter a valid email address', 'error');
+            setIsLoading(false);
+            return;
+        }
+
+        if (role === 'doctor' && !medicalLicenseNo.trim()) {
             showSnackbar('Medical License Number is required for Doctor role', 'error');
             setIsLoading(false);
             return;
@@ -40,45 +68,56 @@ const RegisterScreen = ({ navigation }: any) => {
 
         try {
             // Firebase Authentication
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
             const user = userCredential.user;
+            const normalizedFirebaseUid = user.uid.trim(); // Normalize firebase_uid
+            console.log('Firebase UID:', normalizedFirebaseUid); // Log Firebase UID
 
             // Store user data and role in Firestore
             await setDoc(doc(firestore, 'users', user.uid), {
                 email: user.email,
-                username: username,
+                username: trimmedUsername,
                 role: role,
-                ...(role === 'doctor' && { medicalLicenseNo }), // Include medicalLicenseNo for doctors
+                ...(role === 'doctor' && { medicalLicenseNo: medicalLicenseNo.trim() }),
             });
 
             // Store username, email, role, and firebase_uid in MongoDB via FastAPI
             try {
-                console.log('Sending request to MongoDB...');
-                const response = await fetch(`${BASE_URL}/auth/register`, {
+                console.log('Sending request to MongoDB:', {
+                    username: trimmedUsername,
+                    email: user.email,
+                    role,
+                    firebase_uid: normalizedFirebaseUid,
+                    ...(role === 'doctor' && { doctor_reg_no: medicalLicenseNo.trim() }),
+                });
+                const response = await fetch('http://192.168.1.4:8000/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        username,
+                        username: trimmedUsername,
                         email: user.email,
                         role,
-                        firebase_uid: user.uid,
-                        ...(role === 'doctor' && { doctor_reg_no: medicalLicenseNo }),
+                        firebase_uid: normalizedFirebaseUid,
+                        ...(role === 'doctor' && { doctor_reg_no: medicalLicenseNo.trim() }),
                     }),
                 });
                 console.log('Response status:', response.status);
                 const responseData = await response.json();
                 console.log('Response data:', responseData);
                 if (!response.ok) {
+                    await user.delete(); // Delete Firebase user if MongoDB fails
                     throw new Error(responseData.detail || 'Failed to save data to MongoDB');
                 }
             } catch (mongoError: any) {
-                console.error('MongoDB save error:', mongoError.message);
+                console.error('MongoDB save error:', mongoError);
+                await user.delete(); // Delete Firebase user
                 showSnackbar(`Failed to save data to MongoDB: ${mongoError.message}`, 'error');
                 setIsLoading(false);
                 return;
             }
+
             showSnackbar('Registration Successful!', 'success');
             router.replace('/screens/LoginScreen');
 
@@ -153,6 +192,8 @@ const RegisterScreen = ({ navigation }: any) => {
                             onChangeText={setEmail}
                             placeholder="Email"
                             placeholderTextColor="#888"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
                             className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
                         />
                     </View>

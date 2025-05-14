@@ -1,102 +1,176 @@
-from datetime import datetime, timedelta
-from typing import Optional
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
-from dotenv import load_dotenv
-import os
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
-from bson.objectid import ObjectId
 from config.database import db
+from typing import Optional, List
+from fastapi.encoders import jsonable_encoder
+from bson import ObjectId
+import logging
 
-load_dotenv()
-
-# Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-# Pydantic Models
-class UserBase(BaseModel):
-    email: EmailStr
+class UserCreate(BaseModel):
     username: str
+    email: EmailStr
+    role: str
+    firebase_uid: str
+    doctor_reg_no: Optional[str] = None
+
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    age: Optional[int] = None
+    contact_no: Optional[str] = None
+    address: Optional[str] = None
+    skin_type: Optional[str] = None
+    specialization: Optional[str] = None
+    years_experience: Optional[int] = None
+
+
+class UserResponse(BaseModel):
+    _id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    contact_no: Optional[str] = None
+    specialization: Optional[str] = None
+    years_experience: Optional[int] = None
+    skin_type: Optional[str] = None
+    doctor_reg_no: Optional[str] = None
+    firebase_uid: str
     role: str
 
 
-class UserCreate(UserBase):
-    doctor_reg_no: Optional[str] = None
-    firebase_uid: str
+class SearchDoctorsResponse(BaseModel):
+    doctors: List[UserResponse]
+    total: int
 
 
-class UserInDB(UserBase):
-    id: Optional[str] = None
-    doctor_reg_no: Optional[str] = None
-    firebase_uid: str
-
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
-
-
-# Verify password
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-# Hash password
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-# Create JWT token
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + (
-        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-# Register Endpoint
 @router.post("/register")
 async def register_user(user: UserCreate):
-    try:
-        # Check if user already exists by email or firebase_uid
-        existing_user = await db.users.find_one(
-            {"$or": [{"email": user.email}, {"firebase_uid": user.firebase_uid}]}
-        )
-        if existing_user:
-            raise HTTPException(
-                status_code=400,
-                detail="User with this email or Firebase UID already exists",
-            )
-
-        # Prepare user data for MongoDB
-        user_data = user.dict()
-        user_data["role"] = user_data["role"].lower()  # Ensure role is lowercase
-        if user_data["role"] not in ["user", "doctor"]:
-            raise HTTPException(
-                status_code=400, detail="Invalid role. Must be 'user' or 'doctor'"
-            )
-
-        # Insert user into MongoDB
-        result = await db.users.insert_one(user_data)
-        user_data["id"] = str(result.inserted_id)
-
-        return {"message": "User registered successfully", "user_id": user_data["id"]}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
+    existing_user = await db.users.find_one(
+        {
+            "$or": [
+                {"email": {"$regex": f"^{user.email}$", "$options": "i"}},
+                {"firebase_uid": {"$regex": f"^{user.firebase_uid}$", "$options": "i"}},
+            ]
+        }
+    )
+    if existing_user:
         raise HTTPException(
-            status_code=500, detail=f"Failed to register user: {str(e)}"
+            status_code=400,
+            detail="User with this email or Firebase UID already exists",
         )
+
+    if user.role not in ["user", "doctor"]:
+        raise HTTPException(
+            status_code=400, detail="Invalid role. Must be 'user' or 'doctor'"
+        )
+
+    if user.role == "doctor" and not user.doctor_reg_no:
+        raise HTTPException(
+            status_code=400,
+            detail="Doctor registration number is required for doctor role",
+        )
+
+    user_data = user.dict(exclude_unset=True)
+    result = await db.users.insert_one(user_data)
+
+    return {
+        "message": "User registered successfully",
+        "user_id": str(result.inserted_id),
+    }
+
+
+@router.get("/user/{firebase_uid}")
+async def get_user(firebase_uid: str):
+    logger.info(f"Endpoint /user/{firebase_uid} called")
+    try:
+        logger.info(f"Received firebase_uid from request: {firebase_uid}")
+        logger.info(
+            f"Querying MongoDB with: {{'firebase_uid': {{'$regex': '^{firebase_uid}$', '$options': 'i'}}}}"
+        )
+        user = await db.users.find_one(
+            {"firebase_uid": {"$regex": f"^{firebase_uid}$", "$options": "i"}}
+        )
+        logger.info(f"MongoDB query result: {user}")
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user["_id"] = str(user["_id"])
+        return user
+    except Exception as e:
+        logger.error(f"Exception in get_user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@router.put("/user/{firebase_uid}")
+async def update_user(firebase_uid: str, update_data: UserUpdate):
+    update_dict = update_data.dict(exclude_unset=True)
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No data provided for update")
+
+    result = await db.users.update_one(
+        {"firebase_uid": {"$regex": f"^{firebase_uid}$", "$options": "i"}},
+        {"$set": update_dict},
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"message": "User profile updated successfully"}
+
+
+@router.delete("/user/{firebase_uid}")
+async def delete_user(firebase_uid: str):
+    result = await db.users.delete_one(
+        {"firebase_uid": {"$regex": f"^{firebase_uid}$", "$options": "i"}}
+    )
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"message": "User account deleted successfully"}
+
+
+@router.get("/search/doctors", response_model=SearchDoctorsResponse)
+async def search_doctors(q: str = "", page: int = 1, limit: int = 5):
+    logger.info(
+        f"Endpoint /search/doctors called with query: {q}, page: {page}, limit: {limit}"
+    )
+    try:
+        skip = (page - 1) * limit
+        query = {
+            "role": "doctor",
+            "$or": [
+                {"first_name": {"$regex": f"{q}", "$options": "i"}},
+                {"last_name": {"$regex": f"{q}", "$options": "i"}},
+                {"specialization": {"$regex": f"{q}", "$options": "i"}},
+            ],
+        }
+        # Get total count
+        total = await db.users.count_documents(query)
+        # Fetch paginated doctors
+        doctors = await db.users.find(query).skip(skip).limit(limit).to_list(limit)
+        return {
+            "doctors": [
+                {
+                    "_id": str(doc["_id"]),
+                    "first_name": doc.get("first_name"),
+                    "last_name": doc.get("last_name"),
+                    "contact_no": doc.get("contact_no"),
+                    "specialization": doc.get("specialization"),
+                    "years_experience": doc.get("years_experience"),
+                    "skin_type": doc.get("skin_type"),
+                    "doctor_reg_no": doc.get("doctor_reg_no"),
+                    "firebase_uid": doc.get("firebase_uid"),
+                    "role": doc.get("role"),
+                }
+                for doc in doctors
+            ],
+            "total": total,
+        }
+    except Exception as e:
+        logger.error(f"Exception in search_doctors: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")

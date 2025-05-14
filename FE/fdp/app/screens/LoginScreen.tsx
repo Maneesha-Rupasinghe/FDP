@@ -19,8 +19,14 @@ const LoginScreen = () => {
 
     const handleLogin = async () => {
         setIsLoading(true);
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zAZ]{2,6}$/;
-        if (!emailRegex.test(email)) {
+        const trimmedEmail = email.trim();
+        console.log('Attempting login with email:', trimmedEmail);
+
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        const isEmailValid = emailRegex.test(trimmedEmail);
+        console.log('Email validation result:', isEmailValid);
+
+        if (!isEmailValid) {
             showSnackbar('Invalid email! Please re-enter email', 'error');
             setIsLoading(false);
             return;
@@ -31,17 +37,17 @@ const LoginScreen = () => {
             return;
         }
 
-        const user = await loginWithEmailPassword(email, password);
+        const user = await loginWithEmailPassword(trimmedEmail, password);
         if (user) {
             const userId = user.uid;
-            const userRoll = await checkUserRoll(userId);
-            console.log("User Roll ", userRoll);
+            const userRole = await checkUserRole(userId);
+            console.log("User Role:", userRole);
 
-            if (userRoll == 'doctor') {
-                router.replace('/screens/VetHome');
-                // } else if (userRoll == 'vendor') {
-                //     router.replace('/screens/VendorHome');
+            if (userRole === 'doctor') {
+                console.log("Doctor Home");
+                router.replace('/screens/DoctorHome');
             } else {
+                console.log("Owner Home");
                 router.replace('/screens/OwnerHome');
             }
         }
@@ -69,7 +75,7 @@ const LoginScreen = () => {
         }
     };
 
-    const checkUserRoll = async (userId: string): Promise<string | null> => {
+    const checkUserRole = async (userId: string): Promise<string | null> => {
         try {
             const userDocRef = doc(db, 'users', userId);
             const userDoc = await getDoc(userDocRef);
@@ -88,6 +94,7 @@ const LoginScreen = () => {
             }
         } catch (error: any) {
             console.error('Error fetching user role:', error.message);
+            showSnackbar(`Error fetching user role: ${error.message}`, 'error');
             return null;
         }
     };
@@ -109,20 +116,15 @@ const LoginScreen = () => {
                     contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Image Section */}
                     <View className="justify-start items-center w-full mt-8">
                         <Image
                             source={require('../../assets/images/login.jpg')}
                             className="w-full h-48 rounded-lg object-cover shadow-md"
                         />
                     </View>
-
-                    {/* Login Title Section */}
                     <View className="mt-10">
                         <Text className="text-4xl font-extrabold text-[#3E4241] text-center">Login</Text>
                     </View>
-
-                    {/* Email Input Field */}
                     <View className="mt-8 w-full">
                         <Text className="text-lg text-gray-700 mb-2">Email</Text>
                         <TextInput
@@ -131,10 +133,10 @@ const LoginScreen = () => {
                             placeholder="Enter your email"
                             placeholderTextColor="#888"
                             className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+                            autoCapitalize="none"
+                            keyboardType="email-address"
                         />
                     </View>
-
-                    {/* Password Input Field */}
                     <View className="mt-6 w-full">
                         <Text className="text-lg text-[#3E4241] mb-2">Password</Text>
                         <View className="relative">
@@ -158,8 +160,6 @@ const LoginScreen = () => {
                             </TouchableOpacity>
                         </View>
                     </View>
-
-                    {/* Login Button */}
                     <TouchableOpacity
                         onPress={handleLogin}
                         className={`mt-10 bg-[#3674B5] p-4 w-full rounded-lg items-center shadow-lg ${isLoading ? 'opacity-50' : ''}`}
@@ -169,8 +169,6 @@ const LoginScreen = () => {
                             {isLoading ? 'Logging In...' : 'Login'}
                         </Text>
                     </TouchableOpacity>
-
-                    {/* Register Link */}
                     <View className="flex flex-row justify-center mt-6 gap-x-2">
                         <Text className="text-gray-600">Don't have an account?</Text>
                         <Link className="text-[#3674B5] font-semibold" href={'/screens/RegisterScreen'}>
@@ -178,8 +176,6 @@ const LoginScreen = () => {
                         </Link>
                     </View>
                 </ScrollView>
-
-                {/* Snackbar for displaying success or error messages */}
                 <View className="absolute bottom-5 left-0 right-0">
                     <Snackbar
                         visible={snackbarVisible}
