@@ -269,9 +269,9 @@ const UserProfileScreen = () => {
                         <Text className="text-white text-lg font-semibold">Delete Account</Text>
                     </TouchableOpacity>
 
-                    <View className="flex flex-row justify-center mt-4 gap-x-2">
+                    {/* <View className="flex flex-row justify-center mt-4 gap-x-2">
                         <Link className="text-[#3674B5] font-semibold" href={'../HomeScreen'}>Back to Home</Link>
-                    </View>
+                    </View> */}
                 </View>
             </ScrollView>
             <View className="absolute bottom-5 left-0 right-0">

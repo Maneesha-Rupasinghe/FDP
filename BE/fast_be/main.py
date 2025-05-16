@@ -1,17 +1,20 @@
 from fastapi import FastAPI
-from config.database import db
-from config.database import test_connection
+from config.database import db, test_connection
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from bson.objectid import ObjectId
 from auth.auth import router
 from auth.chat import router as chat_router
+from routes.appointments import router as appointments_router
+from routes import predict
 
 app = FastAPI()
 
-# Include authentication routes
+# Include routes
 app.include_router(router, prefix="/auth")
 app.include_router(chat_router)
+app.include_router(appointments_router)
+app.include_router(predict.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,12 +23,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# Test endpoint
-@app.get("/test")
-async def test_endpoint():
-    return {"message": "Test endpoint"}
 
 
 # Custom JSON encoder for ObjectId
@@ -39,6 +36,12 @@ def custom_json_encoder(obj):
 @app.on_event("startup")
 async def startup_event():
     await test_connection()
+
+
+# Test endpoint
+@app.get("/test")
+async def test_endpoint():
+    return {"message": "Test endpoint"}
 
 
 # Test endpoint to insert and retrieve a document

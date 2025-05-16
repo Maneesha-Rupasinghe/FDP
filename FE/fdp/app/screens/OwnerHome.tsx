@@ -10,6 +10,9 @@ import AppointmentRequest from '../components/User/AppointmentScreen';
 // import ProductListScreen from '../components/User/ProductListScreen';
 import Spinner from 'react-native-loading-spinner-overlay';
 import SearchDoctorsScreen from '../components/User/DoctorList';
+import UserAppointmentHistoryScreen from '../components/User/UserAppointmentHistory';
+import UserAppointmentCalendar from '../components/User/UserAppointmentCalendar';
+import FaceDiseaseScanner from '../components/User/FaceDiseasesScanner';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -60,15 +63,15 @@ const OwnerTabNavigator = () => {
         },
       }}
     >
-      {/* <Tab.Screen
-        name="Shop"
-        component={ProductListScreen}
+      <Tab.Screen
+        name="History"
+        component={UserAppointmentHistoryScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'History',
           tabBarIcon: ({ color, size }) => (
             <Icon name="home" size={size + 4} color={color} />
           ),
-          headerTitle: 'Shop Now 🛒👇',
+          headerTitle: 'Appointment History 🛒👇',
           headerTitleStyle: {
             fontSize: 28,
             fontWeight: 'bold',
@@ -78,7 +81,7 @@ const OwnerTabNavigator = () => {
 
           },
         }}
-      /> */}
+      />
       <Tab.Screen
         name="Appointment"
         component={SearchDoctorsScreen}
@@ -97,15 +100,15 @@ const OwnerTabNavigator = () => {
           },
         }}
       />
-      {/* <Tab.Screen
-        name="Reminders"
-        component={OwnerReminders}
+      <Tab.Screen
+        name="Home"
+        component={UserAppointmentCalendar}
         options={{
-          tabBarLabel: 'Reminders',
+          tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Icon name="bell" size={size + 4} color={color} />
           ),
-          headerTitle: 'Reminders ⏰',
+          headerTitle: 'Home ⏰',
           headerTitleStyle: {
             fontSize: 28,
             fontWeight: 'bold',
@@ -115,7 +118,26 @@ const OwnerTabNavigator = () => {
           },
 
         }}
-      /> */}
+      />
+      <Tab.Screen
+        name="Face"
+        component={FaceDiseaseScanner}
+        options={{
+          tabBarLabel: 'Face',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="bell" size={size + 4} color={color} />
+          ),
+          headerTitle: 'Face ⏰',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#black',
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+          },
+
+        }}
+      />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

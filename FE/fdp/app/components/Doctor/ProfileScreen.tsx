@@ -244,7 +244,7 @@ const DoctorProfileScreen = () => {
             />
           </View>
 
-          <View className="mt-6 w-full">
+          {/* <View className="mt-6 w-full">
             <Text className="text-lg text-gray-700 mb-2">Skin Type</Text>
             <View className="border border-gray-300 rounded-lg bg-white shadow-sm">
               <Picker
@@ -260,7 +260,7 @@ const DoctorProfileScreen = () => {
                 ))}
               </Picker>
             </View>
-          </View>
+          </View> */}
 
           <TouchableOpacity
             onPress={handleUpdateProfile}
@@ -286,9 +286,9 @@ const DoctorProfileScreen = () => {
             <Text className="text-white text-lg font-semibold">Delete Account</Text>
           </TouchableOpacity>
 
-          <View className="flex flex-row justify-center mt-4 gap-x-2">
+          {/* <View className="flex flex-row justify-center mt-4 gap-x-2">
             <Link className="text-[#3674B5] font-semibold" href={'/screens/VetHome'}>Back to Home</Link>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
       <View className="absolute bottom-5 left-0 right-0">

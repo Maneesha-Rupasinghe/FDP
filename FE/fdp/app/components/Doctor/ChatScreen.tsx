@@ -1,4 +1,4 @@
-// app/components/Doctor/ChatScreen.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { Snackbar } from 'react-native-paper';

@@ -1,186 +1,180 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { Snackbar } from 'react-native-paper';
-import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { auth } from '@/app/firebase/firebase';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { auth } from '../../firebase/firebase';
 
-interface Appointment {
-    id: string;
-    from: string;
-    to: string;
-    date: string;
-    time: string;
-    pet: string;
-    status: 'pending' | 'accepted' | 'rejected';
-}
-
-const VetAppointments: React.FC = () => {
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [snackbarVisible, setSnackbarVisible] = useState<boolean>(false);
-    const [snackbarMessage, setSnackbarMessage] = useState<string>('');
-    const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
-    const [hasFetchedData, setHasFetchedData] = useState<boolean>(false);
-    const [errorTimeout, setErrorTimeout] = useState<NodeJS.Timeout | null>(null);
-
-    const firestore = getFirestore();
-    const vetId = auth.currentUser?.uid;
+const DoctorAppointmentScreen = () => {
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!vetId) {
-            setSnackbarMessage('User not authenticated.');
-            setSnackbarType('error');
-            setSnackbarVisible(true);
+        const doctorId = auth.currentUser?.uid;
+        if (!doctorId) {
+            console.log('No authenticated doctor found');
+            setError('No authenticated doctor found');
+            setLoading(false);
             return;
         }
 
-        const appointmentsQuery = query(
-            collection(firestore, 'appointments'),
-            where('to', '==', vetId),
-            where('status', 'in', ['pending', 'accepted', 'rejected']) 
-        );
-
-        const unsubscribe = onSnapshot(
-            appointmentsQuery,
-            (snapshot) => {
-                const fetchedAppointments: Appointment[] = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as Appointment[];
-                setAppointments(fetchedAppointments);
-                setHasFetchedData(true); 
-
-         
-                if (errorTimeout) {
-                    clearTimeout(errorTimeout);
-                    setErrorTimeout(null);
+        const fetchAppointments = async () => {
+            try {
+                const response = await fetch(`http://192.168.1.4:8000/api/appointments/doctor/${doctorId}`);
+                if (!response.ok) {
+                    const errorText = await response.text(); // Read raw response
+                    throw new Error(errorText || 'Failed to fetch appointments');
                 }
-            },
-            (error) => {
-                console.error('Firestore onSnapshot error:', error.message); 
-             
-                const timeout = setTimeout(() => {
-                    if (!hasFetchedData) {
-                        setSnackbarMessage('Failed to fetch appointments.');
-                        setSnackbarType('error');
-                        setSnackbarVisible(true);
-                    }
-                }, 5000);
-                setErrorTimeout(timeout);
+                const data = await response.json();
+                console.log('Fetched appointments:', data);
+                setAppointments(data);
+            } catch (error: any) {
+                console.error('Fetch appointments error:', error.message);
+                setError(`Error fetching appointments: ${error.message}`);
+            } finally {
+                setLoading(false);
             }
-        );
-
-        return () => {
-            unsubscribe();
-            if (errorTimeout) clearTimeout(errorTimeout);
         };
-    }, [vetId]);
 
+        fetchAppointments();
+    }, []);
 
-    const handleStatusChange = async (appointmentId: string, newStatus: string) => {
+    const updateAppointmentStatus = async (appointmentId: string, status: 'accepted' | 'rejected') => {
         try {
-            const appointmentRef = doc(firestore, 'appointments', appointmentId);
-            await updateDoc(appointmentRef, { status: newStatus });
-
-            setSnackbarMessage(`Appointment ${newStatus} successfully!`);
-            setSnackbarType('success');
-            setSnackbarVisible(true);
-        } catch (error) {
-            setSnackbarMessage('Failed to update appointment status.');
-            setSnackbarType('error');
-            setSnackbarVisible(true);
+            const response = await fetch(`http://192.168.1.4:8000/api/appointments/${appointmentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status }),
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to update appointment');
+            }
+            const data = await response.json();
+            console.log('Appointment updated:', data);
+            setAppointments(appointments.map(app => app.id === appointmentId ? { ...app, status } : app));
+        } catch (error: any) {
+            console.error('Update appointment error:', error.message);
+            alert(`Error updating appointment: ${error.message}`);
         }
     };
 
-    return (
-        <View style={{ flex: 1, padding: 10 }} className="bg-[#FBF8EF]">
-            <Text className="text-2xl font-extrabold text-[#3E4241] mb-5">
-                My Appointment
-            </Text>
-
-            {appointments.length === 0 ? (
-                <Text style={{ fontSize: 16, color: '#3E4241', marginHorizontal: 8 }}>
-                    No appointments found.
-                </Text>
-            ) : (
-                <ScrollView>
-                    {appointments.map((appointment) => (
-                        <View
-                            key={appointment.id}
-                            style={{
-                                backgroundColor: '#FFF',
-                                borderRadius: 12,
-                                padding: 12,
-                                marginVertical: 8,
-                                marginHorizontal: 8,
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 4,
-                                elevation: 3,
-                            }}
+    const renderAppointment = ({ item }: { item: any }) => {
+        const isPending = item.status === 'pending';
+        return (
+            <View style={styles.appointmentCard}>
+                <Text style={styles.appointmentText}>User: {item.user_name}</Text>
+                <Text style={styles.appointmentText}>Date: {item.date}</Text>
+                <Text style={styles.appointmentText}>Time: {item.time}</Text>
+                <Text style={styles.appointmentText}>Status: {item.status}</Text>
+                {isPending && (
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity
+                            style={styles.acceptButton}
+                            onPress={() => updateAppointmentStatus(item.id, 'accepted')}
                         >
-                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#3E4241' }}>
-                                Pet: {appointment.pet}
-                            </Text>
-                            <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
-                                Date: {appointment.date}
-                            </Text>
-                            <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
-                                Time: {appointment.time}
-                            </Text>
-                            <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
-                                Status: {appointment.status}
-                            </Text>
-
-                            {/* Status Picker */}
-                            <View style={{ marginTop: 10 }}>
-                                <Text style={{ fontSize: 14, fontWeight: '500', color: '#3E4241', marginBottom: 5 }}>
-                                    Change Status
-                                </Text>
-                                <View style={{
-                                    borderWidth: 1,
-                                    borderColor: '#D1D5DB',
-                                    borderRadius: 8,
-                                    backgroundColor: '#F9FAFB',
-                                }}>
-                                    <Picker
-                                        selectedValue={appointment.status}
-                                        onValueChange={(itemValue) =>
-                                            handleStatusChange(appointment.id, itemValue)
-                                        }
-                                        style={{ height: 48 }}
-                                    >
-                                        <Picker.Item label="Pending" value="pending" />
-                                        <Picker.Item label="Accepted" value="accepted" />
-                                        <Picker.Item label="Rejected" value="rejected" />
-                                    </Picker>
-                                </View>
-                            </View>
-                        </View>
-                    ))}
-                </ScrollView>
-            )}
-
-            {/* Snackbar */}
-            <View className="absolute bottom-5 left-0 right-0">
-                <Snackbar
-                    visible={snackbarVisible}
-                    onDismiss={() => setSnackbarVisible(false)}
-                    duration={Snackbar.DURATION_SHORT}
-                    style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
-                        borderRadius: 8,
-                        padding: 10,
-                        marginHorizontal: 10,
-                        marginBottom: 10,
-                    }}
-                >
-                    <Text style={{ color: '#FFF', fontSize: 14 }}>{snackbarMessage}</Text>
-                </Snackbar>
+                            <Text style={styles.buttonText}>Accept</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.rejectButton}
+                            onPress={() => updateAppointmentStatus(item.id, 'rejected')}
+                        >
+                            <Text style={styles.buttonText}>Reject</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
+        );
+    };
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <Text>Loading appointments...</Text>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>{error}</Text>
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.header}>Appointments</Text>
+            <FlatList
+                data={appointments}
+                renderItem={renderAppointment}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={<Text style={styles.emptyText}>No appointments found</Text>}
+            />
         </View>
     );
 };
 
-export default VetAppointments;
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#FBF8EF',
+        padding: 16,
+    },
+    header: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#3E4241',
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    appointmentCard: {
+        backgroundColor: '#FFF',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    appointmentText: {
+        fontSize: 16,
+        color: '#3E4241',
+        marginBottom: 4,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 8,
+    },
+    acceptButton: {
+        backgroundColor: '#3674B5',
+        padding: 8,
+        borderRadius: 5,
+        flex: 1,
+        marginRight: 5,
+    },
+    rejectButton: {
+        backgroundColor: '#D9534F',
+        padding: 8,
+        borderRadius: 5,
+        flex: 1,
+        marginLeft: 5,
+    },
+    buttonText: {
+        color: '#FFF',
+        textAlign: 'center',
+    },
+    emptyText: {
+        textAlign: 'center',
+        color: '#888',
+        marginTop: 20,
+    },
+    errorText: {
+        color: 'red',
+        textAlign: 'center',
+        marginTop: 20,
+    },
+});
+
+export default DoctorAppointmentScreen;

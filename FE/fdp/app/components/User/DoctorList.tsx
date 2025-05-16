@@ -1,10 +1,11 @@
-// app/components/User/DoctorList.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Platform, Alert } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../../firebase/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import Modal from 'react-native-modal';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const SearchDoctorsScreen = () => {
     const router = useRouter();
@@ -19,20 +20,24 @@ const SearchDoctorsScreen = () => {
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+    const [userName, setUserName] = useState('Unknown User');
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+    const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+    const [isTimePickerVisible, setTimePickerVisible] = useState(false);
 
     const fetchDoctors = async (query: string, page: number) => {
         setIsLoading(true);
         try {
             const response = await fetch(`http://192.168.1.4:8000/auth/search/doctors?q=${query}&page=${page}&limit=${doctorsPerPage}`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
             if (!response.ok) throw new Error('Failed to fetch doctors');
             const data = await response.json();
             console.log('API Response:', data);
-
             if (Array.isArray(data)) {
                 setDoctors(data);
                 setTotalDoctors(data.length);
@@ -52,6 +57,23 @@ const SearchDoctorsScreen = () => {
     useEffect(() => {
         fetchDoctors(searchQuery, currentPage);
     }, [searchQuery, currentPage]);
+
+    useEffect(() => {
+        const fetchUserName = async () => {
+            if (!user) return;
+            try {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    setUserName(userData.username || userData.email || 'Unknown User');
+                }
+            } catch (error: any) {
+                console.error('Error fetching user name:', error.message);
+            }
+        };
+        fetchUserName();
+    }, [user]);
 
     const totalPages = Math.ceil(totalDoctors / doctorsPerPage);
 
@@ -77,7 +99,6 @@ const SearchDoctorsScreen = () => {
             const chatRoomId = [user.uid, doctor.firebase_uid].sort().join('_');
             const chatRoomRef = doc(db, 'chat_rooms', chatRoomId);
 
-            // Fetch the user's username from Firestore
             let userName = 'Unknown User';
             const userDocRef = doc(db, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
@@ -85,18 +106,15 @@ const SearchDoctorsScreen = () => {
                 const userData = userDocSnap.data();
                 userName = userData.username || userData.email || 'Unknown User';
                 console.log('Fetched username from Firestore:', userName);
-            } else {
-                console.log('User document not found in Firestore for UID:', user.uid);
             }
 
-            // Always update the chat room with the correct user_name, even if it exists
             await setDoc(chatRoomRef, {
                 doctor_id: doctor.firebase_uid,
                 user_id: user.uid,
                 doctor_name: `${doctor.first_name} ${doctor.last_name}`.trim(),
                 user_name: userName,
                 created_at: new Date().toISOString(),
-            }, { merge: true }); // Use merge to update existing chat room
+            }, { merge: true });
 
             console.log('Chat room updated/created:', chatRoomId, 'with user_name:', userName);
 
@@ -110,6 +128,60 @@ const SearchDoctorsScreen = () => {
         } catch (error: any) {
             console.error('Initiate chat error:', error.message);
             showSnackbar(`Error initiating chat: ${error.message}`, 'error');
+        }
+    };
+
+    const openAppointmentModal = (doctor: Doctor) => {
+        setSelectedDoctor(doctor);
+        setModalVisible(true);
+    };
+
+    const confirmDate = (date: Date) => {
+        setSelectedDate(date);
+        setDatePickerVisible(false);
+    };
+
+    const confirmTime = (time: Date) => {
+        setSelectedTime(time);
+        setTimePickerVisible(false);
+    };
+
+    const submitAppointment = async () => {
+        if (!selectedDoctor || !selectedDate || !selectedTime || !user) {
+            showSnackbar('Please select date and time', 'error');
+            return;
+        }
+
+        try {
+            const formattedDate = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            const formattedTime = selectedTime.toTimeString().split(' ')[0].slice(0, 5); // HH:MM
+
+            const response = await fetch('http://192.168.1.4:8000/api/appointments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user.uid,
+                    user_name: userName,
+                    doctor_id: selectedDoctor.firebase_uid,
+                    doctor_name: `${selectedDoctor.first_name} ${selectedDoctor.last_name}`.trim(),
+                    date: formattedDate,
+                    time: formattedTime,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to create appointment');
+            }
+            const data = await response.json();
+            console.log('Appointment created:', data);
+            showSnackbar('Appointment created successfully', 'success');
+            setModalVisible(false);
+            setSelectedDate(null);
+            setSelectedTime(null);
+        } catch (error: any) {
+            console.error('Create appointment error:', error.message);
+            showSnackbar(`Error creating appointment: ${error.message}`, 'error');
         }
     };
 
@@ -148,20 +220,14 @@ const SearchDoctorsScreen = () => {
                     </View>
                 )}
                 <View className="flex-row justify-between mt-4">
-                    <TouchableOpacity
-                        onPress={() => toggleCard(item.firebase_uid)}
-                        className="bg-[#3674B5] p-2 rounded-lg"
-                    >
+                    <TouchableOpacity onPress={() => toggleCard(item.firebase_uid)} className="bg-[#3674B5] p-2 rounded-lg">
                         <Text className="text-white text-sm">{isExpanded ? 'See Less' : 'See More'}</Text>
                     </TouchableOpacity>
                     <View className="flex-row space-x-2">
-                        <TouchableOpacity
-                            onPress={() => initiateChat(item)}
-                            className="bg-gray-300 p-2 rounded-lg"
-                        >
+                        <TouchableOpacity onPress={() => initiateChat(item)} className="bg-gray-300 p-2 rounded-lg">
                             <Text className="text-black text-sm">Chat</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity className="bg-gray-300 p-2 rounded-lg">
+                        <TouchableOpacity onPress={() => openAppointmentModal(item)} className="bg-gray-300 p-2 rounded-lg">
                             <Text className="text-black text-sm">Appointment</Text>
                         </TouchableOpacity>
                     </View>
@@ -199,9 +265,7 @@ const SearchDoctorsScreen = () => {
                     >
                         <Text className="text-white text-sm">Previous</Text>
                     </TouchableOpacity>
-                    <Text className="text-gray-700">
-                        Page {currentPage} of {totalPages}
-                    </Text>
+                    <Text className="text-gray-700">Page {currentPage} of {totalPages}</Text>
                     <TouchableOpacity
                         onPress={() => paginate(currentPage + 1)}
                         disabled={currentPage === totalPages}
@@ -216,16 +280,40 @@ const SearchDoctorsScreen = () => {
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
-                    style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
-                        borderRadius: 8,
-                        padding: 10,
-                        marginHorizontal: 10,
-                    }}
+                    style={{ backgroundColor: snackbarType === 'success' ? 'green' : 'red', borderRadius: 8, padding: 10, marginHorizontal: 10 }}
                 >
                     {snackbarMessage}
                 </Snackbar>
             </View>
+            <Modal isVisible={isModalVisible} onBackdropPress={() => setModalVisible(false)}>
+                <View className="bg-white p-6 rounded-lg">
+                    <Text className="text-lg font-bold mb-4">Create Appointment</Text>
+                    <Text className="mb-2">Doctor: {selectedDoctor ? `${selectedDoctor.first_name} ${selectedDoctor.last_name}` : ''}</Text>
+                    <Text className="mb-2">User: {userName}</Text>
+                    <TouchableOpacity onPress={() => setDatePickerVisible(true)} className="bg-gray-200 p-2 rounded-lg mb-2">
+                        <Text>{selectedDate ? selectedDate.toISOString().split('T')[0] : 'Select Date'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setTimePickerVisible(true)} className="bg-gray-200 p-2 rounded-lg mb-4">
+                        <Text>{selectedTime ? selectedTime.toTimeString().split(' ')[0].slice(0, 5) : 'Select Time'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={submitAppointment} className="bg-[#3674B5] p-3 rounded-lg">
+                        <Text className="text-white text-center">Submit Appointment</Text>
+                    </TouchableOpacity>
+                </View>
+                <DateTimePickerModal
+                    isVisible={isDatePickerVisible}
+                    mode="date"
+                    onConfirm={confirmDate}
+                    onCancel={() => setDatePickerVisible(false)}
+                    minimumDate={new Date()}
+                />
+                <DateTimePickerModal
+                    isVisible={isTimePickerVisible}
+                    mode="time"
+                    onConfirm={confirmTime}
+                    onCancel={() => setTimePickerVisible(false)}
+                />
+            </Modal>
         </View>
     );
 };
