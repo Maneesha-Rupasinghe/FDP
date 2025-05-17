@@ -13,6 +13,8 @@ import SearchDoctorsScreen from '../components/User/DoctorList';
 import UserAppointmentHistoryScreen from '../components/User/UserAppointmentHistory';
 import UserAppointmentCalendar from '../components/User/UserAppointmentCalendar';
 import FaceDiseaseScanner from '../components/User/FaceDiseasesScanner';
+import ScanHistoryDashboard from '../components/User/ScanHistoryDashboard';
+import ChartsDashboard from '../components/User/ChartsDashboard';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -156,7 +158,32 @@ const OwnerTabNavigator = () => {
           },
         }}
       />
+      {/* <Tab.Screen
+        name="ChartsDashboard"
+        component={ChartsDashboard}
+        options={{ title: 'Charts' }}
+      /> */}
+
+      <Tab.Screen
+        name="scanhistory"
+        component={ScanHistoryDashboard}
+        options={{
+          tabBarLabel: 'scanhistory',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="user" size={size + 4} color={color} />
+          ),
+          headerTitle: 'scanhistory 🐈',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#black',
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+          },
+        }}
+      />
     </Tab.Navigator>
+
   );
 };
 
