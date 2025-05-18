@@ -1,8 +1,10 @@
 import { View, Text } from "react-native";
+import { colors } from '../../config/colors';
+
 const HomeScreen = () => {
     return (
-        <View>
-            <Text>Home Screen for Vet</Text>
+        <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, color: colors.text, fontWeight: 'bold' }}>Home Screen for Vet</Text>
         </View>
     );
 };

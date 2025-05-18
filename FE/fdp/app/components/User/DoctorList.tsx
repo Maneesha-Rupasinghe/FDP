@@ -235,7 +235,7 @@ const SearchDoctorsScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Search Doctors</Text>
+            <Text style={styles.header}>Available Doctors</Text>
             <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     header: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
         color: colors.text,
         textAlign: 'center',

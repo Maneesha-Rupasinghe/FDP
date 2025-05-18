@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { auth } from '../../firebase/firebase';
+import { colors } from '../../config/colors';
 
 const DoctorAppointmentScreen = () => {
     const [appointments, setAppointments] = useState<any[]>([]);
@@ -20,7 +21,7 @@ const DoctorAppointmentScreen = () => {
             try {
                 const response = await fetch(`http://192.168.1.4:8000/api/appointments/doctor/${doctorId}`);
                 if (!response.ok) {
-                    const errorText = await response.text(); // Read raw response
+                    const errorText = await response.text();
                     throw new Error(errorText || 'Failed to fetch appointments');
                 }
                 const data = await response.json();
@@ -88,7 +89,7 @@ const DoctorAppointmentScreen = () => {
     if (loading) {
         return (
             <View style={styles.container}>
-                <Text>Loading appointments...</Text>
+                <Text style={{ color: colors.text }}>Loading appointments...</Text>
             </View>
         );
     }
@@ -117,29 +118,29 @@ const DoctorAppointmentScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FBF8EF',
+        backgroundColor: colors.background,
         padding: 16,
     },
     header: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 16,
         textAlign: 'center',
     },
     appointmentCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOpacity: 0.1,
         shadowRadius: 5,
         elevation: 3,
     },
     appointmentText: {
         fontSize: 16,
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 4,
     },
     buttonContainer: {
@@ -148,14 +149,14 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     acceptButton: {
-        backgroundColor: '#3674B5',
+        backgroundColor: colors.primary,
         padding: 8,
         borderRadius: 5,
         flex: 1,
         marginRight: 5,
     },
     rejectButton: {
-        backgroundColor: '#D9534F',
+        backgroundColor: colors.error,
         padding: 8,
         borderRadius: 5,
         flex: 1,
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         textAlign: 'center',
-        color: '#888',
+        color: colors.inactiveTint,
         marginTop: 20,
     },
     errorText: {

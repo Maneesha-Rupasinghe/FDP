@@ -36,7 +36,7 @@ const OwnerTabNavigator = () => {
           marginTop: 5,
         },
         headerStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.primary, // Changed app bar background to primary
           elevation: 0,
           shadowOpacity: 0,
           borderBottomWidth: 0,
@@ -44,8 +44,9 @@ const OwnerTabNavigator = () => {
         headerTitleStyle: {
           fontSize: 32,
           fontWeight: 'bold',
-          color: colors.text,
+          color: '#FFF', // Changed to white for contrast with primary background
           textTransform: 'uppercase',
+          textDecorationLine: 'underline', // Underline the header text
         },
         headerTitleContainerStyle: {
           paddingHorizontal: 16,
@@ -59,7 +60,15 @@ const OwnerTabNavigator = () => {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => <Icon name="home" size={size + 4} color={color} />,
-          headerTitle: 'Home ⏰',
+          headerTitle: 'Home',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#FFF', // Ensure contrast with new background
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
+          },
         }}
       />
       <Tab.Screen
@@ -68,7 +77,15 @@ const OwnerTabNavigator = () => {
         options={{
           tabBarLabel: 'Appointments',
           tabBarIcon: ({ color, size }) => <Icon name="user" size={size + 4} color={color} />,
-          headerTitle: 'Appointments 🧑‍⚕️',
+          headerTitle: 'Appointments',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#FFF', // Ensure contrast with new background
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
+          },
         }}
       />
       <Tab.Screen
@@ -77,7 +94,15 @@ const OwnerTabNavigator = () => {
         options={{
           tabBarLabel: 'History',
           tabBarIcon: ({ color, size }) => <Icon name="clock" size={size + 4} color={color} />,
-          headerTitle: 'History 🛒👇',
+          headerTitle: 'History',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#FFF', // Ensure contrast with new background
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
+          },
         }}
       />
       <Tab.Screen
@@ -86,7 +111,15 @@ const OwnerTabNavigator = () => {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => <Icon name="user" size={size + 4} color={color} />,
-          headerTitle: 'Profile 🐈',
+          headerTitle: 'Profile',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#FFF', // Ensure contrast with new background
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
+          },
         }}
       />
     </Tab.Navigator>

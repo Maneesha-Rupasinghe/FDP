@@ -3,6 +3,7 @@ import { View, Text, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Snackbar } from 'react-native-paper';
 import { auth } from '../../firebase/firebase';
+import { colors } from '../../config/colors';
 
 interface Appointment {
     id: string;
@@ -30,7 +31,6 @@ const DoctorAppointmentCalendar = () => {
     const [calendarError, setCalendarError] = useState<boolean>(false);
     const doctor = auth.currentUser;
 
-    // Check for calendar library availability
     useEffect(() => {
         try {
             require('react-native-calendars');
@@ -42,7 +42,6 @@ const DoctorAppointmentCalendar = () => {
         }
     }, []);
 
-    // Fetch appointments for the doctor
     useEffect(() => {
         if (!doctor) {
             setSnackbarMessage('Doctor not authenticated.');
@@ -60,16 +59,14 @@ const DoctorAppointmentCalendar = () => {
                 }
                 const data: Appointment[] = await response.json();
 
-                // Filter for accepted appointments
                 const acceptedAppointments = data.filter(appointment => appointment.status === 'accepted');
                 setAppointments(acceptedAppointments);
 
-                // Mark dates with appointments
                 const newMarkedDates: MarkedDates = {};
                 acceptedAppointments.forEach((appointment) => {
                     newMarkedDates[appointment.date] = {
                         marked: true,
-                        dotColor: '#28a745', // Green dot for accepted appointments
+                        dotColor: '#28a745',
                     };
                 });
                 setMarkedDates(newMarkedDates);
@@ -83,25 +80,22 @@ const DoctorAppointmentCalendar = () => {
         fetchAppointments();
     }, [doctor]);
 
-    // Handle day press to show appointments for that day
     const handleDayPress = (day: { dateString: string }) => {
         setSelectedDate(day.dateString);
     };
 
-    // Filter appointments for the selected date
     const selectedAppointments = appointments.filter(
         (appointment) => appointment.date === selectedDate
     );
 
     return (
         <View style={{ flex: 1, padding: 10 }} className="bg-[#FBF8EF]">
-            <Text className="text-2xl font-extrabold text-[#3E4241] mb-5">
+            <Text className="text-2xl font-extrabold text-[#3E4241] mb-5" style={{ color: colors.text }}>
                 Upcoming Appointments
             </Text>
 
-            {/* Calendar */}
             {calendarError ? (
-                <Text style={{ fontSize: 16, color: '#ff4444', marginHorizontal: 8 }}>
+                <Text style={{ fontSize: 16, color: colors.error, marginHorizontal: 8 }}>
                     Calendar unavailable. Please check your setup or select a date manually.
                 </Text>
             ) : (
@@ -110,28 +104,27 @@ const DoctorAppointmentCalendar = () => {
                         onDayPress={handleDayPress}
                         markedDates={markedDates}
                         theme={{
-                            calendarBackground: '#FFF',
-                            textSectionTitleColor: '#3E4241',
-                            selectedDayBackgroundColor: '#3674B5',
+                            calendarBackground: colors.cardBackground,
+                            textSectionTitleColor: colors.text,
+                            selectedDayBackgroundColor: colors.primary,
                             selectedDayTextColor: '#FFF',
-                            todayTextColor: '#3674B5',
-                            dayTextColor: '#3E4241',
+                            todayTextColor: colors.primary,
+                            dayTextColor: colors.text,
                             textDisabledColor: '#D1D5DB',
-                            arrowColor: '#3674B5',
+                            arrowColor: colors.primary,
                         }}
                         style={{ borderRadius: 8, borderWidth: 1, borderColor: '#D1D5DB' }}
                     />
                 </View>
             )}
 
-            {/* Selected Date Appointments */}
             {selectedDate ? (
                 <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#3E4241', marginBottom: 10, marginHorizontal: 8 }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 10, marginHorizontal: 8 }}>
                         Appointments on {selectedDate}
                     </Text>
                     {selectedAppointments.length === 0 ? (
-                        <Text style={{ fontSize: 16, color: '#3E4241', marginHorizontal: 8 }}>
+                        <Text style={{ fontSize: 16, color: colors.text, marginHorizontal: 8 }}>
                             No accepted appointments on this day.
                         </Text>
                     ) : (
@@ -140,19 +133,19 @@ const DoctorAppointmentCalendar = () => {
                                 <View
                                     key={appointment.id}
                                     style={{
-                                        backgroundColor: '#FFF',
+                                        backgroundColor: colors.cardBackground,
                                         borderRadius: 12,
                                         padding: 12,
                                         marginVertical: 8,
                                         marginHorizontal: 8,
-                                        shadowColor: '#000',
+                                        shadowColor: colors.shadow,
                                         shadowOffset: { width: 0, height: 2 },
                                         shadowOpacity: 0.1,
                                         shadowRadius: 4,
                                         elevation: 3,
                                     }}
                                 >
-                                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#3E4241' }}>
+                                    <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
                                         User: {appointment.user_name}
                                     </Text>
                                     <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
@@ -167,19 +160,18 @@ const DoctorAppointmentCalendar = () => {
                     )}
                 </View>
             ) : (
-                <Text style={{ fontSize: 16, color: '#3E4241', marginHorizontal: 8 }}>
+                <Text style={{ fontSize: 16, color: colors.text, marginHorizontal: 8 }}>
                     Select a date to view appointments.
                 </Text>
             )}
 
-            {/* Snackbar */}
             <View className="absolute bottom-5 left-0 right-0">
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
                     style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
+                        backgroundColor: snackbarType === 'success' ? 'green' : colors.error,
                         borderRadius: 8,
                         padding: 10,
                         marginHorizontal: 10,

@@ -7,6 +7,7 @@ import { signOut, deleteUser } from 'firebase/auth';
 import { Link, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { colors } from '../../config/colors';
 
 const DoctorProfileScreen = () => {
   const router = useRouter();
@@ -204,109 +205,118 @@ const DoctorProfileScreen = () => {
 
   return (
     <>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: '#FBF8EF' }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: colors.background }} showsVerticalScrollIndicator={false}>
         <View className="flex flex-col items-center p-4">
-          <View className="mt-12">
-            <Text className="text-4xl font-extrabold text-[#3E4241] text-center">Doctor Profile</Text>
+          <View className="mt-0">
+             <Text className={`text-[24px] font-bold text-${colors.text} mb-[16px] text-center`}>Doctor Profile</Text>
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">First Name</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>First Name</Text>
             <TextInput
               value={firstName}
               onChangeText={setFirstName}
               placeholder="First Name"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Last Name</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Last Name</Text>
             <TextInput
               value={lastName}
               onChangeText={setLastName}
               placeholder="Last Name"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Contact No</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Contact No</Text>
             <TextInput
               value={contactNo}
               onChangeText={setContactNo}
               placeholder="Contact No"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               keyboardType="phone-pad"
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Doctor Registration No</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Doctor Registration No</Text>
             <TextInput
               value={doctorRegNo}
               editable={false}
               placeholder="Doctor Registration No"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-gray-100 shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Specialization</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Specialization</Text>
             <TextInput
               value={specialization}
               onChangeText={setSpecialization}
               placeholder="Specialization (e.g., Dermatology)"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Years of Experience</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Years of Experience</Text>
             <TextInput
               value={yearsExperience}
               onChangeText={setYearsExperience}
               placeholder="Years of Experience"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               keyboardType="numeric"
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Latitude</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Latitude</Text>
             <TextInput
               value={latitude}
               onChangeText={(text) => setLatitude(text)}
               onBlur={() => validateCoordinate(latitude, setLatitude)}
               placeholder="Latitude (e.g., 6.9271)"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               keyboardType="numeric"
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Longitude</Text>
+            <Text className="text-lg text-gray-700 mb-2" style={{ color: colors.text }}>Longitude</Text>
             <TextInput
               value={longitude}
               onChangeText={(text) => setLongitude(text)}
               onBlur={() => validateCoordinate(longitude, setLongitude)}
               placeholder="Longitude (e.g., 79.8612)"
-              placeholderTextColor="#888"
+              placeholderTextColor={colors.inactiveTint}
               keyboardType="numeric"
               className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+              style={{ borderColor: colors.inactiveTint, backgroundColor: colors.cardBackground }}
             />
           </View>
 
           <TouchableOpacity
             onPress={() => setMapModalVisible(true)}
             className="mt-6 bg-[#FF9800] p-4 w-full rounded-lg items-center"
+            style={{ backgroundColor: colors.secondary }}
           >
             <Text className="text-white text-lg font-semibold">Set Location on Map</Text>
           </TouchableOpacity>
@@ -320,9 +330,9 @@ const DoctorProfileScreen = () => {
             <View className="flex-1 bg-black bg-opacity-50 justify-center items-center">
               <View className="bg-white rounded-lg p-4 w-[90%] h-[70%] shadow-lg">
                 <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-xl font-bold text-[#3E4241]">Pin Your Location</Text>
+                  <Text className="text-xl font-bold text-[#3E4241]" style={{ color: colors.text }}>Pin Your Location</Text>
                   <TouchableOpacity onPress={() => setMapModalVisible(false)}>
-                    <Icon name="close" size={24} color="#3E4241" />
+                    <Icon name="close" size={24} color={colors.text} />
                   </TouchableOpacity>
                 </View>
                 <MapView
@@ -337,6 +347,7 @@ const DoctorProfileScreen = () => {
                 <TouchableOpacity
                   onPress={() => setMapModalVisible(false)}
                   className="mt-4 bg-[#3674B5] p-4 rounded-lg items-center"
+                  style={{ backgroundColor: colors.primary }}
                 >
                   <Text className="text-white text-lg font-semibold">Confirm Location</Text>
                 </TouchableOpacity>
@@ -347,6 +358,7 @@ const DoctorProfileScreen = () => {
           <TouchableOpacity
             onPress={handleUpdateProfile}
             className="mt-8 bg-[#3674B5] p-4 w-full rounded-lg items-center"
+            style={{ backgroundColor: colors.primary }}
             disabled={isLoading}
           >
             <Text className="text-white text-lg font-semibold">Update Profile</Text>
@@ -355,6 +367,7 @@ const DoctorProfileScreen = () => {
           <TouchableOpacity
             onPress={handleSignOut}
             className="mt-4 bg-gray-500 p-4 w-full rounded-lg items-center"
+            style={{ backgroundColor: colors.inactiveTint }}
             disabled={isLoading}
           >
             <Text className="text-white text-lg font-semibold">Sign Out</Text>
@@ -363,6 +376,7 @@ const DoctorProfileScreen = () => {
           <TouchableOpacity
             onPress={handleDeleteAccount}
             className="mt-4 bg-red-500 p-4 w-full rounded-lg items-center"
+            style={{ backgroundColor: colors.error }}
             disabled={isLoading}
           >
             <Text className="text-white text-lg font-semibold">Delete Account</Text>
@@ -375,7 +389,7 @@ const DoctorProfileScreen = () => {
           onDismiss={() => setSnackbarVisible(false)}
           duration={Snackbar.DURATION_SHORT}
           style={{
-            backgroundColor: snackbarType === 'success' ? 'green' : 'red',
+            backgroundColor: snackbarType === 'success' ? 'green' : colors.error,
             borderRadius: 8,
             padding: 10,
             marginHorizontal: 10,

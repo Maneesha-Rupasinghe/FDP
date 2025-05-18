@@ -2,10 +2,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Feather';
 import ProfileScreen from '../components/Doctor/ProfileScreen';
-import HomeScreen from '../components/Doctor/HomeScreen';
 import VetAppointments from '../components/Doctor/AppointmentScreen';
 import DoctorChatListScreen from '../components/Doctor/DoctorChatListScreen';
-
+import { colors } from '../config/colors';
 
 const Tab = createBottomTabNavigator();
 
@@ -14,7 +13,7 @@ const VetHome = () => {
     <Tab.Navigator
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#FBF8EF',
+          backgroundColor: colors.background,
           borderTopWidth: 0,
           elevation: 8,
           shadowOpacity: 0.1,
@@ -25,8 +24,8 @@ const VetHome = () => {
           paddingVertical: 10,
           height: 70,
         },
-        tabBarActiveTintColor: '#3674B5',
-        tabBarInactiveTintColor: '#888',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.inactiveTint,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: 'bold',
@@ -35,9 +34,8 @@ const VetHome = () => {
         tabBarIconStyle: {
           marginTop: 5,
         },
-
         headerStyle: {
-          backgroundColor: '#FBF8EF',
+          backgroundColor: colors.primary, // Changed app bar background color to primary
           elevation: 0,
           shadowOpacity: 0,
           borderBottomWidth: 0,
@@ -45,8 +43,9 @@ const VetHome = () => {
         headerTitleStyle: {
           fontSize: 32,
           fontWeight: 'bold',
-          color: '#3E4241',
+          color: '#FFF', // Changed text color to white for contrast with primary background
           textTransform: 'uppercase',
+          textDecorationLine: 'underline', // Underline the header text
         },
         headerTitleContainerStyle: {
           paddingHorizontal: 16,
@@ -55,59 +54,43 @@ const VetHome = () => {
       }}
     >
       <Tab.Screen
-        name="Chat"
-        component={DoctorChatListScreen}
-        options={{
-          tabBarLabel: 'Chat',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size + 4} color={color} />
-          ),
-          headerTitle: 'Chat 📅',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-          },
-        }}
-      />
-      <Tab.Screen
         name="Appointments"
         component={VetAppointments}
         options={{
           tabBarLabel: 'Appointments',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="user" size={size + 4} color={color} />
+            <Icon name="calendar" size={size + 4} color={color} />
           ),
-          headerTitle: 'Appointments 🧑‍⚕️',
+          headerTitle: 'Home ',
           headerTitleStyle: {
             fontSize: 28,
             fontWeight: 'bold',
-            color: '#black',
+            color: '#FFF', // Ensure contrast with new background
             textTransform: 'uppercase',
             letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
           },
         }}
       />
-      {/* <Tab.Screen
-        name="Reminders"
-        component={VetReminders}
+      <Tab.Screen
+        name="Chat"
+        component={DoctorChatListScreen}
         options={{
-          tabBarLabel: 'Reminders',
+          tabBarLabel: 'Chat',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="bell" size={size + 4} color={color} />
+            <Icon name="message-square" size={size + 4} color={color} />
           ),
-          headerTitle: 'Reminders ⏰',
+          headerTitle: 'Chat ',
           headerTitleStyle: {
             fontSize: 28,
             fontWeight: 'bold',
-            color: '#black',
+            color: '#FFF', // Ensure contrast with new background
             textTransform: 'uppercase',
             letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
           },
         }}
-      /> */}
+      />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -116,13 +99,14 @@ const VetHome = () => {
           tabBarIcon: ({ color, size }) => (
             <Icon name="user" size={size + 4} color={color} />
           ),
-          headerTitle: 'Profile 🐾',
+          headerTitle: 'Profile ',
           headerTitleStyle: {
             fontSize: 28,
             fontWeight: 'bold',
-            color: '#black',
+            color: '#FFF', // Ensure contrast with new background
             textTransform: 'uppercase',
             letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
           },
         }}
       />

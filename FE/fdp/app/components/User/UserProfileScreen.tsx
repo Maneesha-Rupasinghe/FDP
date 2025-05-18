@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { auth } from '../../firebase/firebase';
 import { colors } from '../../config/colors';
 import UserProfileScreen from '../../components/User/ProfileScreen';
-import RegularUpdatesScreen from './RegularUpdatesScreen';
+import RegularUpdatesScreen from '../../components/User/RegularUpdatesScreen';
+import { scheduleDailyFaceScanReminder, requestNotificationPermission, testNotification } from '../../utils/NotificationService';
 
 const ProfileScreen = () => {
     const [activeTab, setActiveTab] = useState<'profile' | 'updates'>('profile');
@@ -12,6 +13,14 @@ const ProfileScreen = () => {
     const router = useRouter();
 
     useEffect(() => {
+        const setupNotifications = async () => {
+            await requestNotificationPermission();
+            await testNotification(); // Test notification to confirm setup
+            await scheduleDailyFaceScanReminder(); // Schedule daily at 8:00 AM
+        };
+
+        setupNotifications();
+
         if (!auth.currentUser) {
             console.log('No authenticated user, redirecting to LoginScreen');
             router.replace('/screens/LoginScreen');

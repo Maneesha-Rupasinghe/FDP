@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { auth } from '../../firebase/firebase';
 import { collection, query, where, onSnapshot, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
+import { colors } from '../../config/colors';
 
 const DoctorChatListScreen = () => {
   const router = useRouter();
@@ -31,7 +32,6 @@ const DoctorChatListScreen = () => {
         ...doc.data(),
       }));
 
-      // Fetch the last message timestamp for each chat room
       const roomsWithLastMessage = await Promise.all(
         rooms.map(async (room) => {
           const messagesRef = collection(db, 'chat_rooms', room.id, 'messages');
@@ -73,7 +73,7 @@ const DoctorChatListScreen = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Loading chat rooms...</Text>
+        <Text style={{ color: colors.text }}>Loading chat rooms...</Text>
       </View>
     );
   }
@@ -94,13 +94,13 @@ const DoctorChatListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBF8EF',
+    backgroundColor: colors.background,
     padding: 16,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#3E4241',
+    color: colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -108,21 +108,21 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
-    backgroundColor: '#FFF',
+    backgroundColor: colors.cardBackground,
     borderRadius: 8,
     marginBottom: 8,
   },
   chatTitle: {
     fontSize: 18,
-    color: '#3674B5',
+    color: colors.primary,
   },
   chatTime: {
     fontSize: 12,
-    color: '#888',
+    color: colors.inactiveTint,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#888',
+    color: colors.inactiveTint,
     marginTop: 20,
   },
 });

@@ -21,8 +21,8 @@ const DoctorMapView = () => {
     const initialRegion = {
         latitude: 7.8731,
         longitude: 80.7718,
-        latitudeDelta: 8.0,
-        longitudeDelta: 8.0,
+        latitudeDelta: 1.0,
+        longitudeDelta: 1.0,
     };
 
     useEffect(() => {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
-        padding: 16,
+
     },
     mapContainer: {
         flex: 1,
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     },
     customCallout: {
         position: 'absolute',
-        bottom: 20,
+        top: 20,
         left: 20,
         right: 20,
         backgroundColor: colors.cardBackground,
