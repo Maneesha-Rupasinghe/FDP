@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "fdp",
-    "slug": "fdp",
+    "name": "vet-pet",
+    "slug": "vet-pet",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fdp",
+    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
@@ -16,7 +17,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.maneesha99.vetpet",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBhMouZJFFRnwP9gYtJpwX3kumdfJEWEtU"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -33,10 +39,25 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "eb4aacf0-3106-4415-8544-4661007b8855"
+      }
     }
   }
 }
