@@ -6,6 +6,7 @@ import { Snackbar } from 'react-native-paper';
 import { Link, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/Feather';
+import { colors } from '../config/colors';
 
 const LoginScreen = () => {
     const router = useRouter();
@@ -111,84 +112,81 @@ const LoginScreen = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-            <View className="flex-1 bg-[#FBF8EF]">
+            <View style={{ flex: 1, backgroundColor: colors.background }}>
                 <ScrollView
-                    contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
+                    contentContainerStyle={{ padding: 16, paddingBottom: 100, alignItems: 'center' }}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View className="justify-start items-center w-full mt-8">
+                    <View style={{ width: '100%', marginTop: 20 }}>
                         <Image
                             source={require('../../assets/images/login.jpg')}
-                            className="w-full h-48 rounded-lg object-cover shadow-md"
+                            style={{ width: '100%', height: 200, borderRadius: 12, overflow: 'hidden' }}
                         />
                     </View>
-                    <View className="mt-10">
-                        <Text className="text-4xl font-extrabold text-[#3E4241] text-center">Login</Text>
+                    <View style={{ marginTop: 30 }}>
+                        <Text style={{ fontSize: 36, fontWeight: 'bold', color: colors.text, textAlign: 'center' }}>Login</Text>
                     </View>
-                    <View className="mt-8 w-full">
-                        <Text className="text-lg text-gray-700 mb-2">Email</Text>
-                        <TextInput
-                            value={email}
-                            onChangeText={setEmail}
-                            placeholder="Enter your email"
-                            placeholderTextColor="#888"
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                        />
-                    </View>
-                    <View className="mt-6 w-full">
-                        <Text className="text-lg text-[#3E4241] mb-2">Password</Text>
-                        <View className="relative">
+                    <View style={{ width: '90%', marginTop: 20, backgroundColor: colors.cardBackground, borderRadius: 12, padding: 16, elevation: 3 }}>
+                        <View style={{ marginBottom: 15 }}>
+                            <Text style={{ fontSize: 16, color: colors.text, marginBottom: 5 }}>Email</Text>
                             <TextInput
-                                value={password}
-                                onChangeText={setPassword}
-                                placeholder="Enter your password"
-                                placeholderTextColor="#888"
-                                secureTextEntry={!isPasswordVisible}
-                                className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+                                value={email}
+                                onChangeText={setEmail}
+                                placeholder="Enter your email"
+                                placeholderTextColor={colors.inactiveTint}
+                                style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 10, fontSize: 16, backgroundColor: '#FFF' }}
+                                autoCapitalize="none"
+                                keyboardType="email-address"
                             />
-                            <TouchableOpacity
-                                onPress={togglePasswordVisibility}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                            >
-                                <Icon
-                                    name={isPasswordVisible ? 'eye-off' : 'eye'}
-                                    size={20}
-                                    color="gray"
-                                />
-                            </TouchableOpacity>
                         </View>
+                        <View style={{ marginBottom: 15 }}>
+                            <Text style={{ fontSize: 16, color: colors.text, marginBottom: 5 }}>Password</Text>
+                            <View style={{ position: 'relative' }}>
+                                <TextInput
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    placeholder="Enter your password"
+                                    placeholderTextColor={colors.inactiveTint}
+                                    secureTextEntry={!isPasswordVisible}
+                                    style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 10, fontSize: 16, backgroundColor: '#FFF', paddingRight: 40 }}
+                                />
+                                <TouchableOpacity
+                                    onPress={togglePasswordVisibility}
+                                    style={{ position: 'absolute', right: 10, top: '50%', transform: [{ translateY: -10 }] }}
+                                >
+                                    <Icon
+                                        name={isPasswordVisible ? 'eye-off' : 'eye'}
+                                        size={20}
+                                        color={colors.inactiveTint}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        <TouchableOpacity
+                            onPress={handleLogin}
+                            style={{ marginTop: 20, backgroundColor: colors.primary, padding: 12, borderRadius: 8, alignItems: 'center', elevation: 3, opacity: isLoading ? 0.5 : 1 }}
+                            disabled={isLoading}
+                        >
+                            <Text style={{ color: '#FFF', fontSize: 18, fontWeight: '600' }}>
+                                {isLoading ? 'Logging In...' : 'Login'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                        onPress={handleLogin}
-                        className={`mt-10 bg-[#3674B5] p-4 w-full rounded-lg items-center shadow-lg ${isLoading ? 'opacity-50' : ''}`}
-                        disabled={isLoading}
-                    >
-                        <Text className="text-white text-lg font-semibold">
-                            {isLoading ? 'Logging In...' : 'Login'}
-                        </Text>
-                    </TouchableOpacity>
-                    <View className="flex flex-row justify-center mt-6 gap-x-2">
-                        <Text className="text-gray-600">Don't have an account?</Text>
-                        <Link className="text-[#3674B5] font-semibold" href={'/screens/RegisterScreen'}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 15, marginBottom: 20 }}>
+                        <Text style={{ color: colors.inactiveTint }}>Don't have an account?</Text>
+                        <Link href={'/screens/RegisterScreen'} style={{ color: colors.primary, fontWeight: '600', marginLeft: 5 }}>
                             Register
                         </Link>
                     </View>
                 </ScrollView>
-                <View className="absolute bottom-5 left-0 right-0">
+                <View style={{ position: 'absolute', bottom: 10, left: 10, right: 10 }}>
                     <Snackbar
                         visible={snackbarVisible}
                         onDismiss={() => setSnackbarVisible(false)}
                         duration={Snackbar.DURATION_SHORT}
-                        style={{
-                            backgroundColor: snackbarType === 'success' ? 'green' : 'red',
-                            borderRadius: 8,
-                            padding: 10,
-                            marginHorizontal: 10,
-                        }}
+                        style={{ backgroundColor: snackbarType === 'success' ? colors.success : colors.error, borderRadius: 8, elevation: 3 }}
                     >
-                        {snackbarMessage}
+                        <Text style={{ color: '#FFF' }}>{snackbarMessage}</Text>
                     </Snackbar>
                 </View>
             </View>

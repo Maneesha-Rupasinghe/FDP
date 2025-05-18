@@ -1,10 +1,10 @@
-// app/components/User/ChatScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { useLocalSearchParams } from 'expo-router';
 import { auth, db } from '../../firebase/firebase';
 import { collection, addDoc, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { colors } from '../../config/colors';
 
 const ChatScreen = () => {
     const { chatRoomId, otherPartyName } = useLocalSearchParams();
@@ -72,9 +72,9 @@ const ChatScreen = () => {
     const renderMessage = ({ item }: { item: { id: string; sender_id: string; text: string; timestamp: Timestamp } }) => {
         const isSentByUser = user ? item.sender_id === user.uid : false;
         return (
-            <View className={`mb-2 p-2 rounded-lg ${isSentByUser ? 'bg-[#3674B5] self-end' : 'bg-gray-200 self-start'}`}>
-                <Text className={isSentByUser ? 'text-white' : 'text-black'}>{item.text}</Text>
-                <Text className={`text-xs ${isSentByUser ? 'text-white' : 'text-gray-500'}`}>
+            <View style={[styles.messageContainer, isSentByUser ? styles.sentMessage : styles.receivedMessage]}>
+                <Text style={styles.messageText}>{item.text}</Text>
+                <Text style={styles.timestampText}>
                     {item.timestamp?.toDate().toLocaleTimeString()}
                 </Text>
             </View>
@@ -84,48 +84,128 @@ const ChatScreen = () => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 bg-[#FBF8EF] p-4"
+            style={styles.container}
         >
-            <Text className="text-2xl font-bold text-[#3E4241] mb-4">Chat with {otherPartyName}</Text>
+            <Text style={styles.header}>Chat with {otherPartyName}</Text>
             <FlatList
                 data={messages}
                 renderItem={renderMessage}
                 keyExtractor={(item) => item.id}
-                className="flex-1"
-                contentContainerStyle={{ paddingBottom: 20 }}
+                style={styles.messageList}
+                contentContainerStyle={styles.messageListContent}
             />
-            <View className="flex-row items-center mt-4">
+            <View style={styles.inputContainer}>
                 <TextInput
                     value={newMessage}
                     onChangeText={setNewMessage}
                     placeholder="Type a message..."
-                    placeholderTextColor="#888"
-                    className="flex-1 border border-gray-300 rounded-lg py-2 px-4 bg-white"
+                    placeholderTextColor={colors.inactiveTint}
+                    style={styles.input}
                 />
                 <TouchableOpacity
                     onPress={sendMessage}
-                    className="bg-[#3674B5] p-2 rounded-lg ml-2"
+                    style={styles.sendButton}
                 >
-                    <Text className="text-white font-semibold">Send</Text>
+                    <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
             </View>
-            <View className="absolute bottom-5 left-0 right-0">
+            <View style={styles.snackbarContainer}>
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
                     style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
+                        backgroundColor: snackbarType === 'success' ? colors.success : colors.error,
                         borderRadius: 8,
                         padding: 10,
                         marginHorizontal: 10,
                     }}
                 >
-                    {snackbarMessage}
+                    <Text style={styles.snackbarText}>{snackbarMessage}</Text>
                 </Snackbar>
             </View>
         </KeyboardAvoidingView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+        padding: 16,
+    },
+    header: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.text,
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    messageList: {
+        flex: 1,
+    },
+    messageListContent: {
+        paddingBottom: 20,
+    },
+    messageContainer: {
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 8,
+        maxWidth: '70%',
+    },
+    sentMessage: {
+        backgroundColor: colors.primary,
+        alignSelf: 'flex-end',
+    },
+    receivedMessage: {
+        backgroundColor: colors.secondary,
+        alignSelf: 'flex-start',
+    },
+    messageText: {
+        fontSize: 16,
+        color: colors.cardBackground,
+    },
+    timestampText: {
+        fontSize: 12,
+        color: colors.cardBackground,
+        textAlign: 'right',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    input: {
+        flex: 1,
+        height: 48,
+        borderColor: colors.inactiveTint,
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        fontSize: 16,
+        backgroundColor: colors.cardBackground,
+        marginRight: 8,
+    },
+    sendButton: {
+        backgroundColor: colors.primary,
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    sendButtonText: {
+        color: colors.cardBackground,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    snackbarContainer: {
+        position: 'absolute',
+        bottom: 5,
+        left: 0,
+        right: 0,
+    },
+    snackbarText: {
+        color: colors.cardBackground,
+    },
+});
 
 export default ChatScreen;

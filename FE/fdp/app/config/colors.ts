@@ -8,4 +8,5 @@ export const colors = {
   error: '#DC3545', // Error messages (e.g., red for Snackbars)
   cardBackground: '#FFFFFF', // Card background color
   shadow: '#000000', // Shadow color for elevation
+  
 };

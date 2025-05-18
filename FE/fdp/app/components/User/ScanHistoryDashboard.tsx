@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { auth } from '../../firebase/firebase';
-import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native'; // Added useNavigation
+import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Link } from 'expo-router';
+import { colors } from '../../config/colors';
 
 interface ScanRecord {
     _id: string;
@@ -26,22 +27,22 @@ interface HistoryResponse {
 type RootStackParamList = {
     ScanHistoryDashboard: undefined;
     ChartsDashboard: undefined;
-    // add other routes here if needed
 };
 
 const ScanHistoryDashboard = () => {
     const [historyResponse, setHistoryResponse] = useState<HistoryResponse | null>(null);
+    const [filteredData, setFilteredData] = useState<ScanRecord[]>([]);
     const [selectedRecords, setSelectedRecords] = useState<ScanRecord[]>([]);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [snackbarVisible, setSnackbarVisible] = useState<boolean>(false);
     const [snackbarMessage, setSnackbarMessage] = useState<string>('');
     const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
     const [loading, setLoading] = useState<boolean>(false);
+    const [currentPage, setCurrentPage] = useState<number>(1);
     const user = auth.currentUser;
-    const navigation = useNavigation<NavigationProp<RootStackParamList>>(); // For navigation to ChartsDashboard
-    const recordsPerPage = 10;
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+    const recordsPerPage = 4;
 
-    // Fetch scan history function
     const fetchHistory = useCallback(async (page: number = 1) => {
         if (!user) {
             showSnackbar('User not authenticated.', 'error');
@@ -58,6 +59,9 @@ const ScanHistoryDashboard = () => {
             const data: HistoryResponse = await response.json();
             console.log('Received data:', data);
             setHistoryResponse(data);
+            setFilteredData(data.data);
+            setCurrentPage(page);
+            setSearchQuery('');
         } catch (error: any) {
             console.error('Fetch history error:', error.message);
             showSnackbar(`Error fetching scan history: ${error.message}`, 'error');
@@ -66,33 +70,28 @@ const ScanHistoryDashboard = () => {
         }
     }, [user]);
 
-    // Auto-refetch when the screen comes into focus
     useFocusEffect(
         useCallback(() => {
-            fetchHistory(1); // Fetch first page on focus
+            setCurrentPage(1);
+            fetchHistory(1);
         }, [fetchHistory])
     );
 
-    // Handle pagination
-    const loadMore = () => {
-        if (loading || !historyResponse || historyResponse.page >= historyResponse.total_pages) return;
-        const nextPage = historyResponse.page + 1;
-        fetchHistory(nextPage);
-    };
-
-    // Handle search (client-side filtering for now)
     const handleSearch = (query: string) => {
         setSearchQuery(query);
         if (historyResponse) {
-            const filtered = historyResponse.data.filter(record =>
-                new Date(record.timestamp).toLocaleDateString().includes(query) ||
-                record.result.toLowerCase().includes(query.toLowerCase())
-            );
-            setHistoryResponse({ ...historyResponse, data: filtered.slice(0, recordsPerPage) });
+            if (query.trim() === '') {
+                setFilteredData(historyResponse.data);
+            } else {
+                const filtered = historyResponse.data.filter(record =>
+                    new Date(record.timestamp).toLocaleDateString().includes(query) ||
+                    record.result.toLowerCase().includes(query.toLowerCase())
+                );
+                setFilteredData(filtered);
+            }
         }
     };
 
-    // Handle record selection for comparison
     const handleSelectRecord = (record: ScanRecord) => {
         if (selectedRecords.includes(record)) {
             setSelectedRecords(selectedRecords.filter(r => r !== record));
@@ -103,7 +102,6 @@ const ScanHistoryDashboard = () => {
         }
     };
 
-    // Close comparison mode
     const closeComparison = () => {
         setSelectedRecords([]);
         showSnackbar('Comparison mode closed.', 'success');
@@ -115,13 +113,16 @@ const ScanHistoryDashboard = () => {
         setSnackbarVisible(true);
     };
 
+    const goToPage = (page: number) => {
+        if (page > 0 && page <= (historyResponse?.total_pages || 1)) {
+            fetchHistory(page);
+        }
+    };
+
     const renderScanRecord = ({ item }: { item: ScanRecord }) => {
         const isSelected = selectedRecords.includes(item);
         return (
-            <TouchableOpacity
-                style={[styles.recordCard, isSelected && styles.selectedRecord]}
-                onPress={() => handleSelectRecord(item)}
-            >
+            <TouchableOpacity style={[styles.recordCard, isSelected && styles.selectedRecord]} onPress={() => handleSelectRecord(item)}>
                 <Text style={styles.recordText}>Date: {new Date(item.timestamp).toLocaleString()}</Text>
                 <Text style={styles.recordText}>Condition: {item.result}</Text>
                 <Text style={styles.recordText}>Confidence: {(item.confidence * 100).toFixed(2)}%</Text>
@@ -134,19 +135,14 @@ const ScanHistoryDashboard = () => {
             <View style={styles.headerContainer}>
                 <Text style={styles.header}>Scan History Dashboard</Text>
                 <View style={styles.headerButtons}>
-                    {/* <TouchableOpacity onPress={() => navigation.navigate('ChartsDashboard')} style={styles.chartButton}>
-                        <Icon name="bar-chart" size={24} color="#3674B5" />
-                    </TouchableOpacity> */}
                     <Link href="/components/User/ChartsDashboard" style={styles.chartButton}>
-                        <Icon name="bar-chart" size={24} color="#3674B5" />
+                        <Icon name="bar-chart" size={24} color={colors.primary} />
                     </Link>
-                    <TouchableOpacity onPress={() => fetchHistory(1)} style={styles.refreshButton}>
-                        <Icon name="refresh" size={24} color="#3674B5" />
+                    <TouchableOpacity onPress={() => { setCurrentPage(1); fetchHistory(1); }} style={styles.refreshButton}>
+                        <Icon name="refresh" size={24} color={colors.primary} />
                     </TouchableOpacity>
                 </View>
             </View>
-
-            {/* Search Bar */}
             <TextInput
                 style={styles.searchBar}
                 placeholder="Search by date or condition..."
@@ -154,28 +150,38 @@ const ScanHistoryDashboard = () => {
                 onChangeText={handleSearch}
                 autoCapitalize="none"
             />
-
-            {/* Scan History List */}
             {historyResponse && (
                 <FlatList
-                    data={historyResponse.data}
+                    data={filteredData}
                     renderItem={renderScanRecord}
                     keyExtractor={(item) => item._id}
                     ListEmptyComponent={<Text style={styles.emptyText}>No scan history found.</Text>}
-                    onEndReached={loadMore}
-                    onEndReachedThreshold={0.5}
-                    ListFooterComponent={loading ? <Text style={styles.loadingText}>Loading...</Text> : null}
+                    ListFooterComponent={
+                        loading ? <Text style={styles.loadingText}>Loading...</Text> :
+                            (historyResponse.total_pages > 1
+                                ? (
+                                    <View style={styles.pagination}>
+                                        <TouchableOpacity onPress={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
+                                            <Text style={[styles.paginationText, currentPage === 1 && styles.disabledText]}>Previous</Text>
+                                        </TouchableOpacity>
+                                        <Text style={styles.paginationText}>Page {currentPage} of {historyResponse.total_pages}</Text>
+                                        <TouchableOpacity onPress={() => goToPage(currentPage + 1)} disabled={currentPage === historyResponse.total_pages}>
+                                            <Text style={[styles.paginationText, currentPage === historyResponse.total_pages && styles.disabledText]}>Next</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )
+                                : null
+                            )
+                    }
                     style={styles.historyList}
                 />
             )}
-
-            {/* Comparison Section */}
             {selectedRecords.length === 2 && (
-                <ScrollView style={styles.comparisonContainer}>
+                <View style={styles.comparisonContainer}>
                     <View style={styles.comparisonHeader}>
                         <Text style={styles.subHeader}>Compare Images</Text>
                         <TouchableOpacity onPress={closeComparison} style={styles.closeButton}>
-                            <Icon name="close" size={24} color="#3E4241" />
+                            <Icon name="close" size={24} color={colors.text} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.comparisonRow}>
@@ -192,23 +198,16 @@ const ScanHistoryDashboard = () => {
                             </View>
                         ))}
                     </View>
-                </ScrollView>
+                </View>
             )}
-
-            {/* Snackbar */}
             <View style={styles.snackbarContainer}>
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
-                    style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
-                        borderRadius: 8,
-                        padding: 10,
-                        marginHorizontal: 10,
-                    }}
+                    style={{ backgroundColor: snackbarType === 'success' ? colors.success : colors.error, borderRadius: 8, elevation: 3 }}
                 >
-                    {snackbarMessage}
+                    <Text style={styles.snackbarText}>{snackbarMessage}</Text>
                 </Snackbar>
             </View>
         </View>
@@ -218,23 +217,26 @@ const ScanHistoryDashboard = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FBF8EF',
-        padding: 16,
+        backgroundColor: colors.background,
+        padding: 8,
     },
     headerContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 16,
+        flexWrap: 'wrap',
     },
     header: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#3E4241',
+        color: colors.text,
         textAlign: 'center',
+        flex: 1,
     },
     headerButtons: {
         flexDirection: 'row',
+        alignItems: 'center',
     },
     chartButton: {
         padding: 8,
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
     subHeader: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#3E4241',
+        color: colors.text,
         textAlign: 'center',
     },
     comparisonHeader: {
@@ -265,43 +267,51 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 10,
         marginBottom: 16,
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
     },
     historyList: {
         flex: 1,
     },
     recordCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
     },
     selectedRecord: {
-        borderColor: '#3674B5',
+        borderColor: colors.primary,
         borderWidth: 2,
     },
     recordText: {
         fontSize: 16,
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 4,
     },
     emptyText: {
         textAlign: 'center',
-        color: '#888',
+        color: colors.inactiveTint,
         marginTop: 20,
     },
     loadingText: {
         textAlign: 'center',
-        color: '#888',
+        color: colors.inactiveTint,
         padding: 10,
     },
     comparisonContainer: {
         marginTop: 16,
+        backgroundColor: colors.cardBackground,
+        borderRadius: 8,
+        padding: 10,
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     comparisonRow: {
         flexDirection: 'row',
@@ -311,6 +321,8 @@ const styles = StyleSheet.create({
         flex: 1,
         marginHorizontal: 5,
         alignItems: 'center',
+        gap: 5,
+        borderRadius: 8,
     },
     comparisonImage: {
         width: 150,
@@ -321,14 +333,29 @@ const styles = StyleSheet.create({
     },
     comparisonText: {
         fontSize: 14,
-        color: '#3E4241',
+        color: colors.text,
         textAlign: 'center',
     },
     snackbarContainer: {
         position: 'absolute',
-        bottom: 5,
-        left: 0,
-        right: 0,
+        bottom: 10,
+        left: 10,
+        right: 10,
+    },
+    snackbarText: {
+        color: '#FFF',
+    },
+    pagination: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 10,
+    },
+    paginationText: {
+        fontSize: 16,
+        color: colors.primary,
+    },
+    disabledText: {
+        color: colors.inactiveTint,
     },
 });
 

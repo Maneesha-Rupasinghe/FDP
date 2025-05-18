@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 import { Link, useRouter, useFocusEffect } from 'expo-router';
 import Icon from 'react-native-vector-icons/Feather';
+import { colors } from '../config/colors';
 
 const RegisterScreen = ({ navigation }: any) => {
     const router = useRouter();
@@ -22,7 +23,6 @@ const RegisterScreen = ({ navigation }: any) => {
 
     const firestore = getFirestore();
 
-    // Clear form inputs when screen is focused (e.g., after logout)
     useFocusEffect(
         React.useCallback(() => {
             setEmail('');
@@ -34,20 +34,17 @@ const RegisterScreen = ({ navigation }: any) => {
         }, [])
     );
 
-    // Validate email format
     const isValidEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     };
 
-    // Handle the registration logic
     const handleRegister = async () => {
         setIsLoading(true);
         const trimmedEmail = email.trim();
         const trimmedUsername = username.trim();
         const trimmedPassword = password.trim();
 
-        // Client-side validation
         if (!trimmedEmail || !trimmedUsername || !trimmedPassword) {
             showSnackbar('All fields are required', 'error');
             setIsLoading(false);
@@ -67,13 +64,11 @@ const RegisterScreen = ({ navigation }: any) => {
         }
 
         try {
-            // Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
             const user = userCredential.user;
-            const normalizedFirebaseUid = user.uid.trim(); // Normalize firebase_uid
-            console.log('Firebase UID:', normalizedFirebaseUid); // Log Firebase UID
+            const normalizedFirebaseUid = user.uid.trim();
+            console.log('Firebase UID:', normalizedFirebaseUid);
 
-            // Store user data and role in Firestore
             await setDoc(doc(firestore, 'users', user.uid), {
                 email: user.email,
                 username: trimmedUsername,
@@ -81,7 +76,6 @@ const RegisterScreen = ({ navigation }: any) => {
                 ...(role === 'doctor' && { medicalLicenseNo: medicalLicenseNo.trim() }),
             });
 
-            // Store username, email, role, and firebase_uid in MongoDB via FastAPI
             try {
                 console.log('Sending request to MongoDB:', {
                     username: trimmedUsername,
@@ -92,9 +86,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 });
                 const response = await fetch('http://192.168.1.4:8000/auth/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username: trimmedUsername,
                         email: user.email,
@@ -107,12 +99,12 @@ const RegisterScreen = ({ navigation }: any) => {
                 const responseData = await response.json();
                 console.log('Response data:', responseData);
                 if (!response.ok) {
-                    await user.delete(); // Delete Firebase user if MongoDB fails
+                    await user.delete();
                     throw new Error(responseData.detail || 'Failed to save data to MongoDB');
                 }
             } catch (mongoError: any) {
                 console.error('MongoDB save error:', mongoError);
-                await user.delete(); // Delete Firebase user
+                await user.delete();
                 showSnackbar(`Failed to save data to MongoDB: ${mongoError.message}`, 'error');
                 setIsLoading(false);
                 return;
@@ -120,7 +112,6 @@ const RegisterScreen = ({ navigation }: any) => {
 
             showSnackbar('Registration Successful!', 'success');
             router.replace('/screens/LoginScreen');
-
         } catch (error: any) {
             console.error('Registration error:', error.message);
             showSnackbar(`Error during registration: ${error.message}`, 'error');
@@ -129,19 +120,16 @@ const RegisterScreen = ({ navigation }: any) => {
         setIsLoading(false);
     };
 
-    // Toggle password visibility
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
     };
 
-    // Function to show Snackbar messages
     const showSnackbar = (message: string, type: 'success' | 'error') => {
         setSnackbarMessage(message);
         setSnackbarType(type);
         setSnackbarVisible(true);
     };
 
-    // Determine the image based on the selected role
     const getRoleImage = () => {
         if (role === 'doctor') {
             return require('../../assets/images/doctor.webp');
@@ -151,135 +139,112 @@ const RegisterScreen = ({ navigation }: any) => {
     };
 
     return (
-        <>
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: '#FBF8EF' }} showsVerticalScrollIndicator={false}>
-                <View className="flex flex-col items-center p-4">
-
-                    {/* Image Section */}
-                    <View className="justify-start items-center w-full mt-8">
-                        <Image
-                            source={getRoleImage()}
-                            className="w-full h-52 rounded-lg object-cover shadow-md"
-                        />
-                    </View>
-
-                    {/* Registration Title Section */}
-                    <View className="mt-12">
-                        <Text className="text-4xl font-extrabold text-[#3E4241] text-center">Register</Text>
-                    </View>
-
-                    {/* Toggle between User and Doctor */}
-                    <View className="flex flex-row mt-4">
-                        <TouchableOpacity
-                            onPress={() => setRole('user')}
-                            className={`px-4 py-2 rounded-l-md ${role === 'user' ? 'bg-[#3674B5]' : 'bg-gray-300'}`}
-                        >
-                            <Text className={`text-white ${role === 'user' ? 'font-bold' : ''}`}>User</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setRole('doctor')}
-                            className={`px-4 py-2 rounded-r-md ${role === 'doctor' ? 'bg-[#3674B5]' : 'bg-gray-300'}`}
-                        >
-                            <Text className={`text-white ${role === 'doctor' ? 'font-bold' : ''}`}>Doctor</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Email Input Field */}
-                    <View className="mt-6 w-full">
-                        <Text className="text-lg text-gray-700 mb-2">Email</Text>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: colors.background }} showsVerticalScrollIndicator={false}>
+            <View style={{ padding: 16, alignItems: 'center' }}>
+                <View style={{ width: '100%', marginTop: 20 }}>
+                    <Image
+                        source={getRoleImage()}
+                        style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden' }}
+                    />
+                </View>
+                <View style={{ marginTop: 30 }}>
+                    <Text style={{ fontSize: 36, fontWeight: 'bold', color: colors.text, textAlign: 'center' }}>Register</Text>
+                </View>
+                <View style={{ flexDirection: 'row', marginTop: 20 }}>
+                    <TouchableOpacity
+                        onPress={() => setRole('user')}
+                        style={{ padding: 12, borderTopLeftRadius: 8, borderBottomLeftRadius: 8, backgroundColor: role === 'user' ? colors.primary : '#DDD' }}
+                    >
+                        <Text style={{ color: '#FFF', fontWeight: role === 'user' ? 'bold' : 'normal' }}>User</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setRole('doctor')}
+                        style={{ padding: 12, borderTopRightRadius: 8, borderBottomRightRadius: 8, backgroundColor: role === 'doctor' ? colors.primary : '#DDD' }}
+                    >
+                        <Text style={{ color: '#FFF', fontWeight: role === 'doctor' ? 'bold' : 'normal' }}>Doctor</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={{ width: '90%', marginTop: 20, backgroundColor: colors.cardBackground, borderRadius: 12, padding: 16, elevation: 3 }}>
+                    <View style={{ marginBottom: 15 }}>
+                        <Text style={{ fontSize: 16, color: colors.text, marginBottom: 5 }}>Email</Text>
                         <TextInput
                             value={email}
                             onChangeText={setEmail}
                             placeholder="Email"
-                            placeholderTextColor="#888"
+                            placeholderTextColor={colors.inactiveTint}
                             keyboardType="email-address"
                             autoCapitalize="none"
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 10, fontSize: 16, backgroundColor: '#FFF' }}
                         />
                     </View>
-
-                    {/* Username Input Field */}
-                    <View className="mt-6 w-full">
-                        <Text className="text-lg text-gray-700 mb-2">User Name</Text>
+                    <View style={{ marginBottom: 15 }}>
+                        <Text style={{ fontSize: 16, color: colors.text, marginBottom: 5 }}>User Name</Text>
                         <TextInput
                             value={username}
                             onChangeText={setUsername}
                             placeholder="Username"
-                            placeholderTextColor="#888"
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+                            placeholderTextColor={colors.inactiveTint}
+                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 10, fontSize: 16, backgroundColor: '#FFF' }}
                         />
                     </View>
-
-                    {/* Password Input Field */}
-                    <View className="mt-6 w-full">
-                        <Text className="text-lg text-[#3E4241] mb-2">Password</Text>
-                        <View className="relative">
+                    <View style={{ marginBottom: 15 }}>
+                        <Text style={{ fontSize: 16, color: colors.text, marginBottom: 5 }}>Password</Text>
+                        <View style={{ position: 'relative' }}>
                             <TextInput
                                 value={password}
                                 onChangeText={setPassword}
                                 placeholder="Enter your password"
-                                placeholderTextColor="#888"
+                                placeholderTextColor={colors.inactiveTint}
                                 secureTextEntry={!isPasswordVisible}
-                                className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+                                style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 10, fontSize: 16, backgroundColor: '#FFF', paddingRight: 40 }}
                             />
                             <TouchableOpacity
                                 onPress={togglePasswordVisibility}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                                style={{ position: 'absolute', right: 10, top: '50%', transform: [{ translateY: -10 }] }}
                             >
                                 <Icon
                                     name={isPasswordVisible ? 'eye-off' : 'eye'}
                                     size={20}
-                                    color="gray"
+                                    color={colors.inactiveTint}
                                 />
                             </TouchableOpacity>
                         </View>
                     </View>
-
-                    {/* Medical License Number Input (if Doctor role is selected) */}
                     {role === 'doctor' && (
-                        <View className="mt-6 w-full">
+                        <View style={{ marginBottom: 15 }}>
                             <TextInput
                                 value={medicalLicenseNo}
                                 onChangeText={setMedicalLicenseNo}
                                 placeholder="Medical License Number"
-                                placeholderTextColor="#888"
-                                className="border-b border-gray-300 py-2 px-3 w-full text-lg"
+                                placeholderTextColor={colors.inactiveTint}
+                                style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 10, fontSize: 16, backgroundColor: '#FFF' }}
                             />
                         </View>
                     )}
-
-                    {/* Register Button */}
                     <TouchableOpacity
                         onPress={handleRegister}
-                        className="mt-8 bg-[#3674B5] p-4 w-full rounded-lg items-center"
+                        style={{ marginTop: 20, backgroundColor: colors.primary, padding: 12, borderRadius: 8, alignItems: 'center', elevation: 3, opacity: isLoading ? 0.5 : 1 }}
                         disabled={isLoading}
                     >
-                        <Text className="text-white text-lg font-semibold">Register</Text>
+                        <Text style={{ color: '#FFF', fontSize: 18, fontWeight: '600' }}>Register</Text>
                     </TouchableOpacity>
-
-                    <View className="flex flex-row justify-center mt-[12px] gap-x-2">
-                        <Text>Already have an account?</Text>
-                        <Link className="text-[#3674B5] font-semibold" href={'/screens/LoginScreen'}>Sign in</Link>
-                    </View>
-
                 </View>
-            </ScrollView>
-            <View className="absolute bottom-5 left-0 right-0">
+                <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 15, marginBottom: 20 }}>
+                    <Text style={{ color: colors.inactiveTint }}>Already have an account?</Text>
+                    <Link href={'/screens/LoginScreen'} style={{ color: colors.primary, fontWeight: '600', marginLeft: 5 }}>Sign in</Link>
+                </View>
+            </View>
+            <View style={{ position: 'absolute', bottom: 10, left: 10, right: 10 }}>
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
-                    style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
-                        borderRadius: 8,
-                        padding: 10,
-                        marginHorizontal: 10,
-                    }}
+                    style={{ backgroundColor: snackbarType === 'success' ? colors.success : colors.error, borderRadius: 8, elevation: 3 }}
                 >
-                    {snackbarMessage}
+                    <Text style={{ color: '#FFF' }}>{snackbarMessage}</Text>
                 </Snackbar>
             </View>
-        </>
+        </ScrollView>
     );
 };
 

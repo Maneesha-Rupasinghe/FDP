@@ -2,16 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { auth } from '../../firebase/firebase';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { colors } from '../../config/colors';
 
 const UserAppointmentHistoryScreen = () => {
     const [appointments, setAppointments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [sortBy, setSortBy] = useState<'created_at' | 'date'>('created_at'); // Default sort by submission date
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Default descending
+    const [sortBy, setSortBy] = useState<'created_at' | 'date'>('created_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const user = auth.currentUser;
     const router = useRouter();
-    const { refresh } = useLocalSearchParams(); // Get route params to detect new appointment
+    const { refresh } = useLocalSearchParams();
 
     const fetchAppointments = useCallback(async () => {
         if (!user) {
@@ -28,7 +29,6 @@ const UserAppointmentHistoryScreen = () => {
                 throw new Error(errorText || 'Failed to fetch appointments');
             }
             const data = await response.json();
-            // Apply sorting after fetching
             const sortedData = [...data].sort((a, b) => {
                 const valueA = sortBy === 'created_at' ? new Date(a.created_at) : new Date(`${a.date} ${a.time}`);
                 const valueB = sortBy === 'created_at' ? new Date(b.created_at) : new Date(`${b.date} ${b.time}`);
@@ -41,11 +41,11 @@ const UserAppointmentHistoryScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [user, sortBy, sortOrder]); // Re-fetch and sort when sort criteria changes
+    }, [user, sortBy, sortOrder]);
 
     useEffect(() => {
         fetchAppointments();
-    }, [fetchAppointments, refresh]); // Refetch when 'refresh' param changes
+    }, [fetchAppointments, refresh]);
 
     const handleRefresh = () => {
         fetchAppointments();
@@ -53,11 +53,11 @@ const UserAppointmentHistoryScreen = () => {
 
     const toggleSort = (newSortBy: 'created_at' | 'date') => {
         setSortBy(newSortBy);
-        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); // Toggle between asc and desc
+        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     };
 
     const renderAppointment = ({ item }: { item: any }) => {
-        const borderColor = item.status === 'accepted' ? 'green' : item.status === 'rejected' ? 'red' : '#3674B5';
+        const borderColor = item.status === 'accepted' ? colors.success : item.status === 'rejected' ? colors.error : colors.primary;
 
         return (
             <View style={[styles.appointmentCard, { borderColor, borderWidth: 2 }]}>
@@ -72,7 +72,7 @@ const UserAppointmentHistoryScreen = () => {
     if (loading) {
         return (
             <View style={styles.container}>
-                <Text>Loading appointments...</Text>
+                <Text style={styles.loadingText}>Loading appointments...</Text>
             </View>
         );
     }
@@ -93,13 +93,13 @@ const UserAppointmentHistoryScreen = () => {
                     style={[styles.sortButton, sortBy === 'created_at' && styles.activeSortButton]}
                     onPress={() => toggleSort('created_at')}
                 >
-                    <Text style={styles.sortButtonText}>Sort by Submit Date {sortBy === 'created_at' && (sortOrder === 'asc' ? '↑' : '↓')}</Text>
+                    <Text style={styles.sortButtonText}>Submit Date {sortBy === 'created_at' && (sortOrder === 'asc' ? '↑' : '↓')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.sortButton, sortBy === 'date' && styles.activeSortButton]}
                     onPress={() => toggleSort('date')}
                 >
-                    <Text style={styles.sortButtonText}>Sort by Appt Date {sortBy === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</Text>
+                    <Text style={styles.sortButtonText}>Appointment Date {sortBy === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</Text>
                 </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
@@ -118,13 +118,13 @@ const UserAppointmentHistoryScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FBF8EF',
+        backgroundColor: colors.background,
         padding: 16,
     },
     header: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 16,
         textAlign: 'center',
     },
@@ -134,58 +134,64 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     sortButton: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
         padding: 8,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#CCC',
+        borderColor: colors.inactiveTint,
     },
     activeSortButton: {
-        backgroundColor: '#3674B5',
-        borderColor: '#3674B5',
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
     },
     sortButtonText: {
-        color: '#3E4241',
+        color: colors.text,
         fontSize: 14,
         textAlign: 'center',
     },
     refreshButton: {
-        backgroundColor: '#3674B5',
+        backgroundColor: colors.primary,
         padding: 10,
         borderRadius: 8,
         marginBottom: 16,
         alignSelf: 'center',
     },
     refreshButtonText: {
-        color: '#FFF',
+        color: colors.cardBackground,
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
     },
     appointmentCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 5,
         elevation: 3,
     },
     appointmentText: {
         fontSize: 16,
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 4,
     },
     emptyText: {
         textAlign: 'center',
-        color: '#888',
+        color: colors.inactiveTint,
         marginTop: 20,
     },
     errorText: {
-        color: 'red',
+        color: colors.error,
         textAlign: 'center',
         marginTop: 20,
+    },
+    loadingText: {
+        textAlign: 'center',
+        color: colors.inactiveTint,
+        fontSize: 16,
     },
 });
 

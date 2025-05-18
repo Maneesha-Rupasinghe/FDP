@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Snackbar } from 'react-native-paper';
 import { auth } from '../../firebase/firebase';
+import { colors } from '../../config/colors';
 
 interface Appointment {
     id: string;
@@ -30,7 +31,6 @@ const UserAppointmentCalendar = () => {
     const [calendarError, setCalendarError] = useState<boolean>(false);
     const user = auth.currentUser;
 
-    // Check for calendar library availability
     useEffect(() => {
         try {
             require('react-native-calendars');
@@ -42,7 +42,6 @@ const UserAppointmentCalendar = () => {
         }
     }, []);
 
-    // Fetch appointments for the user
     useEffect(() => {
         if (!user) {
             setSnackbarMessage('User not authenticated.');
@@ -59,17 +58,13 @@ const UserAppointmentCalendar = () => {
                     throw new Error(errorText || 'Failed to fetch appointments');
                 }
                 const data: Appointment[] = await response.json();
-
-                // Filter for accepted appointments
                 const acceptedAppointments = data.filter(appointment => appointment.status === 'accepted');
                 setAppointments(acceptedAppointments);
-
-                // Mark dates with appointments
                 const newMarkedDates: MarkedDates = {};
                 acceptedAppointments.forEach((appointment) => {
                     newMarkedDates[appointment.date] = {
                         marked: true,
-                        dotColor: '#28a745', // Green dot for accepted appointments
+                        dotColor: colors.success,
                     };
                 });
                 setMarkedDates(newMarkedDates);
@@ -83,113 +78,148 @@ const UserAppointmentCalendar = () => {
         fetchAppointments();
     }, [user]);
 
-    // Handle day press to show appointments for that day
     const handleDayPress = (day: { dateString: string }) => {
         setSelectedDate(day.dateString);
     };
 
-    // Filter appointments for the selected date
     const selectedAppointments = appointments.filter(
         (appointment) => appointment.date === selectedDate
     );
 
     return (
-        <View style={{ flex: 1, padding: 10 }} className="bg-[#FBF8EF]">
-            <Text className="text-2xl font-extrabold text-[#3E4241] mb-5">
-                Upcoming Appointments
-            </Text>
-
-            {/* Calendar */}
+        <View style={styles.container}>
+            <Text style={styles.header}>Upcoming Appointments</Text>
             {calendarError ? (
-                <Text style={{ fontSize: 16, color: '#ff4444', marginHorizontal: 8 }}>
+                <Text style={styles.errorText}>
                     Calendar unavailable. Please check your setup or select a date manually.
                 </Text>
             ) : (
-                <View style={{ marginBottom: 15 }}>
+                <View style={styles.card}>
                     <Calendar
                         onDayPress={handleDayPress}
                         markedDates={markedDates}
                         theme={{
-                            calendarBackground: '#FFF',
-                            textSectionTitleColor: '#3E4241',
-                            selectedDayBackgroundColor: '#3674B5',
+                            calendarBackground: colors.cardBackground,
+                            textSectionTitleColor: colors.text,
+                            selectedDayBackgroundColor: colors.primary,
                             selectedDayTextColor: '#FFF',
-                            todayTextColor: '#3674B5',
-                            dayTextColor: '#3E4241',
+                            todayTextColor: colors.primary,
+                            dayTextColor: colors.text,
                             textDisabledColor: '#D1D5DB',
-                            arrowColor: '#3674B5',
+                            arrowColor: colors.primary,
                         }}
-                        style={{ borderRadius: 8, borderWidth: 1, borderColor: '#D1D5DB' }}
+                        style={styles.calendar}
                     />
-                </View>
-            )}
-
-            {/* Selected Date Appointments */}
-            {selectedDate ? (
-                <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#3E4241', marginBottom: 10, marginHorizontal: 8 }}>
-                        Appointments on {selectedDate}
-                    </Text>
-                    {selectedAppointments.length === 0 ? (
-                        <Text style={{ fontSize: 16, color: '#3E4241', marginHorizontal: 8 }}>
-                            No accepted appointments on this day.
-                        </Text>
-                    ) : (
-                        <ScrollView>
-                            {selectedAppointments.map((appointment) => (
-                                <View
-                                    key={appointment.id}
-                                    style={{
-                                        backgroundColor: '#FFF',
-                                        borderRadius: 12,
-                                        padding: 12,
-                                        marginVertical: 8,
-                                        marginHorizontal: 8,
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 2 },
-                                        shadowOpacity: 0.1,
-                                        shadowRadius: 4,
-                                        elevation: 3,
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#3E4241' }}>
-                                        Doctor: {appointment.doctor_name}
-                                    </Text>
-                                    <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
-                                        Time: {appointment.time}
-                                    </Text>
-                                    <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>
-                                        Status: {appointment.status}
-                                    </Text>
-                                </View>
-                            ))}
-                        </ScrollView>
+                    {selectedDate && (
+                        <View style={styles.appointmentsContainer}>
+                            <Text style={styles.subHeader}>Appointments on {selectedDate}</Text>
+                            {selectedAppointments.length === 0 ? (
+                                <Text style={styles.noAppointmentsText}>No accepted appointments on this day.</Text>
+                            ) : (
+                                <ScrollView>
+                                    {selectedAppointments.map((appointment) => (
+                                        <View key={appointment.id} style={styles.appointmentCard}>
+                                            <Text style={styles.appointmentText}>Doctor: {appointment.doctor_name}</Text>
+                                            <Text style={styles.appointmentText}>Time: {appointment.time}</Text>
+                                            <Text style={styles.appointmentText}>Status: {appointment.status}</Text>
+                                        </View>
+                                    ))}
+                                </ScrollView>
+                            )}
+                        </View>
                     )}
                 </View>
-            ) : (
-                <Text style={{ fontSize: 16, color: '#3E4241', marginHorizontal: 8 }}>
-                    Select a date to view appointments.
-                </Text>
             )}
-
-            {/* Snackbar */}
-            <View className="absolute bottom-5 left-0 right-0">
+            <View style={styles.snackbarContainer}>
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
-                    style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
-                        borderRadius: 8,
-                        padding: 10,
-                        marginHorizontal: 10,
-                    }}
+                    style={{ backgroundColor: snackbarType === 'success' ? colors.success : colors.error, borderRadius: 8, elevation: 3 }}
                 >
-                    {snackbarMessage}
+                    <Text style={styles.snackbarText}>{snackbarMessage}</Text>
                 </Snackbar>
             </View>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+        padding: 16,
+    },
+    header: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.text,
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    card: {
+        backgroundColor: colors.cardBackground,
+        borderRadius: 12,
+        padding: 16,
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        marginBottom: 16,
+    },
+    calendar: {
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        marginBottom: 16,
+    },
+    appointmentsContainer: {
+        flex: 1,
+    },
+    subHeader: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: 10,
+        marginHorizontal: 8,
+    },
+    noAppointmentsText: {
+        fontSize: 16,
+        color: colors.text,
+        marginHorizontal: 8,
+    },
+    appointmentCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        padding: 12,
+        marginVertical: 8,
+        marginHorizontal: 8,
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    appointmentText: {
+        fontSize: 16,
+        color: colors.text,
+        marginBottom: 4,
+    },
+    errorText: {
+        fontSize: 16,
+        color: colors.error,
+        marginHorizontal: 8,
+    },
+    snackbarContainer: {
+        position: 'absolute',
+        bottom: 10,
+        left: 10,
+        right: 10,
+    },
+    snackbarText: {
+        color: '#FFF',
+    },
+});
 
 export default UserAppointmentCalendar;

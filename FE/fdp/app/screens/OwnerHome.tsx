@@ -1,32 +1,20 @@
 import React from 'react';
-import { View, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/Feather';
-import ProfileScreen from '../components/User/ProfileScreen';
-import AppointmentRequest from '../components/User/AppointmentScreen';
-// import VetList from '../components/User/VetList';
-// import OwnerReminders from '../components/User/OwnerReminder';
-// import ProductListScreen from '../components/User/ProductListScreen';
-import Spinner from 'react-native-loading-spinner-overlay';
-import SearchDoctorsScreen from '../components/User/DoctorList';
-import UserAppointmentHistoryScreen from '../components/User/UserAppointmentHistory';
-import UserAppointmentCalendar from '../components/User/UserAppointmentCalendar';
-import FaceDiseaseScanner from '../components/User/FaceDiseasesScanner';
-import ScanHistoryDashboard from '../components/User/ScanHistoryDashboard';
-import ChartsDashboard from '../components/User/ChartsDashboard';
-import DoctorMapView from '../components/User/DoctporMapView';
+import { colors } from '../config/colors';
+import HomeScreen from '../components/User/Home';
+import AppointmentsScreen from '../components/User/UserAppointmentScreen';
+import HistoryScreen from '../components/User/UserHistoryScreen';
+import ProfileScreen from '../components/User/UserProfileScreen';
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
 
-// Tab Navigator for Home, VetList (as Appointment), and Profile
 const OwnerTabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#FBF8EF',
+          backgroundColor: colors.background,
           borderTopWidth: 0,
           elevation: 8,
           shadowOpacity: 0.1,
@@ -37,8 +25,8 @@ const OwnerTabNavigator = () => {
           paddingVertical: 10,
           height: 70,
         },
-        tabBarActiveTintColor: '#3674B5',
-        tabBarInactiveTintColor: '#888',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.inactiveTint,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: 'bold',
@@ -47,9 +35,8 @@ const OwnerTabNavigator = () => {
         tabBarIconStyle: {
           marginTop: 5,
         },
-
         headerStyle: {
-          backgroundColor: '#FBF8EF',
+          backgroundColor: colors.background,
           elevation: 0,
           shadowOpacity: 0,
           borderBottomWidth: 0,
@@ -57,7 +44,7 @@ const OwnerTabNavigator = () => {
         headerTitleStyle: {
           fontSize: 32,
           fontWeight: 'bold',
-          color: '#3E4241',
+          color: colors.text,
           textTransform: 'uppercase',
         },
         headerTitleContainerStyle: {
@@ -67,78 +54,30 @@ const OwnerTabNavigator = () => {
       }}
     >
       <Tab.Screen
-        name="History"
-        component={UserAppointmentHistoryScreen}
-        options={{
-          tabBarLabel: 'History',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size + 4} color={color} />
-          ),
-          headerTitle: 'Appointment History 🛒👇',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-
-          },
-        }}
-      />
-      <Tab.Screen
-        name="Appointment"
-        component={SearchDoctorsScreen}
-        options={{
-          tabBarLabel: 'Appointment',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="user" size={size + 4} color={color} />
-          ),
-          headerTitle: 'Appointments 🧑‍⚕️',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-          },
-        }}
-      />
-      <Tab.Screen
         name="Home"
-        component={UserAppointmentCalendar}
+        component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="bell" size={size + 4} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="home" size={size + 4} color={color} />,
           headerTitle: 'Home ⏰',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-          },
-
         }}
       />
       <Tab.Screen
-        name="Face"
-        component={FaceDiseaseScanner}
+        name="Appointments"
+        component={AppointmentsScreen}
         options={{
-          tabBarLabel: 'Face',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="bell" size={size + 4} color={color} />
-          ),
-          headerTitle: 'Face ⏰',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-          },
-
+          tabBarLabel: 'Appointments',
+          tabBarIcon: ({ color, size }) => <Icon name="user" size={size + 4} color={color} />,
+          headerTitle: 'Appointments 🧑‍⚕️',
+        }}
+      />
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{
+          tabBarLabel: 'History',
+          tabBarIcon: ({ color, size }) => <Icon name="clock" size={size + 4} color={color} />,
+          headerTitle: 'History 🛒👇',
         }}
       />
       <Tab.Screen
@@ -146,76 +85,12 @@ const OwnerTabNavigator = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="user" size={size + 4} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Icon name="user" size={size + 4} color={color} />,
           headerTitle: 'Profile 🐈',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-          },
-        }}
-      />
-      <Tab.Screen
-        name="T"
-        component={DoctorMapView}
-        options={{ title: 'Charts' }}
-      />
-
-      <Tab.Screen
-        name="scanhistory"
-        component={ScanHistoryDashboard}
-        options={{
-          tabBarLabel: 'scanhistory',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="user" size={size + 4} color={color} />
-          ),
-          headerTitle: 'scanhistory 🐈',
-          headerTitleStyle: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: '#black',
-            textTransform: 'uppercase',
-            letterSpacing: 2,
-          },
         }}
       />
     </Tab.Navigator>
-
   );
 };
 
-
-const OwnerHome = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="OwnerTabs"
-        component={OwnerTabNavigator}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="AppointmentRequest"
-        component={AppointmentRequest}
-        options={{
-          title: 'Request Appointment',
-          headerStyle: {
-            backgroundColor: '#FBF8EF',
-            elevation: 0,
-            shadowOpacity: 0,
-          },
-          headerTintColor: '#3E4241',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-      />
-    </Stack.Navigator>
-  );
-};
-
-export default OwnerHome;
+export default OwnerTabNavigator;

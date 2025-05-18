@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { auth } from '../../firebase/firebase';
+import { colors } from '../../config/colors';
 
 interface Doctor {
     _id: string;
@@ -15,7 +16,7 @@ interface Doctor {
 const DoctorMapView = () => {
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null); // State for custom callout
+    const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
     const initialRegion = {
         latitude: 7.8731,
@@ -30,9 +31,7 @@ const DoctorMapView = () => {
             try {
                 const response = await fetch(`http://192.168.1.4:8000/auth/search/doctors?page=1&limit=100`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -63,7 +62,7 @@ const DoctorMapView = () => {
 
     const handleMarkerPress = (doctor: Doctor) => {
         console.log('Marker pressed:', doctor);
-        setSelectedDoctor(doctor); // Show custom callout
+        setSelectedDoctor(doctor);
     };
 
     return (
@@ -71,42 +70,33 @@ const DoctorMapView = () => {
             {loading ? (
                 <Text style={styles.loadingText}>Loading doctors...</Text>
             ) : (
-                <>
+                <View style={styles.mapContainer}>
                     <MapView
                         style={styles.map}
                         initialRegion={initialRegion}
-                        onPress={() => {
-                            console.log('Map pressed');
-                            setSelectedDoctor(null); // Hide custom callout when tapping outside
-                        }}
+                        onPress={() => setSelectedDoctor(null)}
                     >
                         {doctors.map((doctor) => (
                             <Marker
                                 key={doctor._id}
-                                coordinate={{
-                                    latitude: doctor.latitude,
-                                    longitude: doctor.longitude,
-                                }}
+                                coordinate={{ latitude: doctor.latitude, longitude: doctor.longitude }}
                                 title={doctor.first_name + ' ' + doctor.last_name}
                                 onPress={() => handleMarkerPress(doctor)}
                             >
-                                {/* Attempt native Callout */}
-                                <Callout tooltip style={styles.callout}>
+                                <Callout style={styles.callout}>
                                     <Text style={styles.calloutText}>Dr. {doctor.first_name} {doctor.last_name}</Text>
                                     <Text style={styles.calloutText}>Contact: {doctor.contact_no}</Text>
                                 </Callout>
                             </Marker>
                         ))}
                     </MapView>
-
-                    {/* Custom Callout Overlay */}
                     {selectedDoctor && (
                         <View style={styles.customCallout}>
                             <Text style={styles.calloutText}>Dr. {selectedDoctor.first_name} {selectedDoctor.last_name}</Text>
                             <Text style={styles.calloutText}>Contact: {selectedDoctor.contact_no}</Text>
                         </View>
                     )}
-                </>
+                </View>
             )}
         </View>
     );
@@ -115,47 +105,56 @@ const DoctorMapView = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: colors.background,
+        padding: 16,
+    },
+    mapContainer: {
+        flex: 1,
+        borderRadius: 12,
+        overflow: 'hidden',
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     map: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height - 100,
+        width: '100%',
+        height: 300, // Fixed height to ensure map visibility
     },
     loadingText: {
         fontSize: 18,
-        color: '#3E4241',
+        color: colors.text,
         textAlign: 'center',
     },
     callout: {
         padding: 10,
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
         borderRadius: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
         maxWidth: 200,
-        minHeight: 60,
     },
     customCallout: {
         position: 'absolute',
-        bottom: 120, // Position above the map's bottom edge
-        backgroundColor: '#FFF',
-        padding: 10,
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: colors.cardBackground,
+        padding: 12,
         borderRadius: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
-        width: Dimensions.get('window').width - 40,
-        marginHorizontal: 20,
     },
     calloutText: {
         fontSize: 14,
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 4,
     },
 });

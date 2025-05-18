@@ -6,6 +6,7 @@ import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LineChart, PieChart, BarChart, StackedBarChart } from 'react-native-chart-kit';
 import { Link } from 'expo-router';
+import { colors } from '../../config/colors';
 
 interface ScanRecord {
     _id: string;
@@ -48,7 +49,6 @@ interface ConditionByConfidence {
 type RootStackParamList = {
     ChartsDashboard: undefined;
     ScanHistoryDashboard: undefined;
-    // add other routes here if needed
 };
 
 const ChartsDashboard = () => {
@@ -66,7 +66,6 @@ const ChartsDashboard = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const recordsPerPage = 10;
 
-    // Fetch scan history
     const fetchHistory = useCallback(async (page: number = 1) => {
         if (!user) {
             showSnackbar('User not authenticated.', 'error');
@@ -90,7 +89,6 @@ const ChartsDashboard = () => {
         }
     }, [user]);
 
-    // Fetch condition frequency
     const fetchConditionFrequency = useCallback(async () => {
         if (!user) return;
         try {
@@ -107,7 +105,6 @@ const ChartsDashboard = () => {
         }
     }, [user]);
 
-    // Fetch condition distribution
     const fetchConditionDistribution = useCallback(async () => {
         if (!user) return;
         try {
@@ -124,7 +121,6 @@ const ChartsDashboard = () => {
         }
     }, [user]);
 
-    // Fetch scan frequency by day
     const fetchScanFrequencyByDay = useCallback(async () => {
         if (!user) return;
         try {
@@ -141,7 +137,6 @@ const ChartsDashboard = () => {
         }
     }, [user]);
 
-    // Fetch condition by confidence range
     const fetchConditionByConfidence = useCallback(async () => {
         if (!user) return;
         try {
@@ -158,7 +153,6 @@ const ChartsDashboard = () => {
         }
     }, [user]);
 
-    // Auto-refetch when the screen comes into focus
     useFocusEffect(
         useCallback(() => {
             fetchHistory(1);
@@ -169,14 +163,12 @@ const ChartsDashboard = () => {
         }, [fetchHistory, fetchConditionFrequency, fetchConditionDistribution, fetchScanFrequencyByDay, fetchConditionByConfidence])
     );
 
-    // Handle pagination
     const loadMore = () => {
         if (loading || !historyResponse || historyResponse.page >= historyResponse.total_pages) return;
         const nextPage = historyResponse.page + 1;
         fetchHistory(nextPage);
     };
 
-    // Handle record selection for comparison
     const handleSelectRecord = (record: ScanRecord) => {
         if (selectedRecords.includes(record)) {
             setSelectedRecords(selectedRecords.filter(r => r !== record));
@@ -187,7 +179,6 @@ const ChartsDashboard = () => {
         }
     };
 
-    // Close comparison mode
     const closeComparison = () => {
         setSelectedRecords([]);
         showSnackbar('Comparison mode closed.', 'success');
@@ -213,12 +204,10 @@ const ChartsDashboard = () => {
         );
     };
 
-    // Line Chart: Condition Frequency Over Time
     const conditionFrequencyChartData = () => {
         const conditions = [...new Set(conditionFrequency.map(item => item.condition))];
         const dates = [...new Set(conditionFrequency.map(item => item.date))].sort();
 
-        // Truncate condition names to 8 characters and append ".." if longer
         const truncatedConditions = conditions.map(condition =>
             condition.length > 8 ? condition.substring(0, 8) + ".." : condition
         );
@@ -238,28 +227,25 @@ const ChartsDashboard = () => {
                 color: () => ['#FF6347', '#4682B4', '#32CD32', '#FFD700', '#6A5ACD'][index % 5],
                 strokeWidth: 2,
             })),
-            legend: truncatedConditions // Use truncated condition names for the legend
+            legend: truncatedConditions
         };
     };
 
-    // Pie Chart: Condition Distribution
     const conditionDistributionChartData = () => {
         const conditions = conditionDistribution.map(item => item.condition);
-        // Truncate condition names to 8 characters and append ".." if longer
         const truncatedConditions = conditions.map(condition =>
             condition.length > 8 ? condition.substring(0, 8) + ".." : condition
         );
 
         return conditionDistribution.map((item, index) => ({
-            name: truncatedConditions[index], // Use truncated condition names
+            name: truncatedConditions[index],
             population: item.count,
             color: ['#FF6347', '#4682B4', '#32CD32', '#FFD700', '#6A5ACD'][index % 5],
-            legendFontColor: '#3E4241',
+            legendFontColor: colors.text,
             legendFontSize: 15,
         }));
     };
 
-    // Bar Chart: Scan Frequency by Day
     const scanFrequencyByDayChartData = () => {
         return {
             labels: scanFrequencyByDay.map(item => item.day),
@@ -269,17 +255,15 @@ const ChartsDashboard = () => {
         };
     };
 
-    // Stacked Bar Chart: Condition by Confidence Range
     const conditionByConfidenceChartData = () => {
         const conditions = [...new Set(conditionFrequency.map(item => item.condition))];
-        // Truncate condition names to 8 characters and append ".." if longer
         const truncatedConditions = conditions.map(condition =>
             condition.length > 8 ? condition.substring(0, 8) + ".." : condition
         );
 
         return {
             labels: conditionByConfidence.map(item => item.confidenceRange),
-            legend: truncatedConditions, // Use truncated condition names for the legend
+            legend: truncatedConditions,
             data: conditionByConfidence.map(item => {
                 const dataRow: number[] = [];
                 conditions.forEach(condition => {
@@ -291,7 +275,6 @@ const ChartsDashboard = () => {
         };
     };
 
-    // Bar Chart: Confidence Comparison for Selected Records
     const confidenceComparisonChartData = () => ({
         labels: selectedRecords.map(record => new Date(record.timestamp).toLocaleDateString()),
         datasets: [{
@@ -302,16 +285,11 @@ const ChartsDashboard = () => {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.headerContainer}>
-                {/* <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-back" size={24} color="#3674B5" />
-                </TouchableOpacity> */}
                 <TouchableOpacity onPress={() => navigation.navigate('ScanHistoryDashboard')}>
                     <Text style={styles.header}>Charts Dashboard</Text>
                 </TouchableOpacity>
             </View>
-            {/* <Link href="/components/User/ScanHistoryDashboard"><Text>Back to Scan History</Text></Link> */}
 
-            {/* Line Chart: Condition Frequency Over Time */}
             {conditionFrequency.length > 0 && (
                 <View style={styles.chartSection}>
                     <Text style={styles.chartTitle}>Condition Frequency Over Time</Text>
@@ -323,14 +301,14 @@ const ChartsDashboard = () => {
                             yAxisLabel=""
                             yAxisSuffix=""
                             chartConfig={{
-                                backgroundColor: '#FFF',
-                                backgroundGradientFrom: '#FFF',
-                                backgroundGradientTo: '#FFF',
+                                backgroundColor: colors.cardBackground,
+                                backgroundGradientFrom: colors.cardBackground,
+                                backgroundGradientTo: colors.cardBackground,
                                 decimalPlaces: 0,
                                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                                labelColor: (opacity = 1) => colors.text,
                                 style: { borderRadius: 16 },
-                                propsForDots: { r: '6', strokeWidth: '2', stroke: '#ffa726' },
+                                propsForDots: { r: '6', strokeWidth: '2', stroke: colors.secondary },
                                 propsForLabels: {
                                     fontSize: 12,
                                 },
@@ -341,131 +319,88 @@ const ChartsDashboard = () => {
                 </View>
             )}
 
-            {/* Pie Chart: Condition Distribution */}
             {conditionDistribution.length > 0 && (
                 <View style={styles.chartSection}>
                     <Text style={styles.chartTitle}>Condition Distribution</Text>
-                    <PieChart
-                        data={conditionDistributionChartData()}
-                        width={Dimensions.get('window').width - 32}
-                        height={220}
-                        chartConfig={{
-                            backgroundColor: '#FFF',
-                            backgroundGradientFrom: '#FFF',
-                            backgroundGradientTo: '#FFF',
-                            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                        }}
-                        accessor="population"
-                        backgroundColor="transparent"
-                        paddingLeft="15"
-                        absolute
-                    />
+                    <ScrollView horizontal>
+                        <PieChart
+                            data={conditionDistributionChartData()}
+                            width={Dimensions.get('window').width - 32}
+                            height={220}
+                            chartConfig={{
+                                backgroundColor: colors.cardBackground,
+                                backgroundGradientFrom: colors.cardBackground,
+                                backgroundGradientTo: colors.cardBackground,
+                                color: (opacity = 1) => colors.text,
+                            }}
+                            accessor="population"
+                            backgroundColor="transparent"
+                            paddingLeft="15"
+                            absolute
+                        />
+                    </ScrollView>
                 </View>
             )}
 
-            {/* Bar Chart: Scan Frequency by Day */}
             {scanFrequencyByDay.length > 0 && (
                 <View style={styles.chartSection}>
                     <Text style={styles.chartTitle}>Scan Frequency by Day</Text>
-                    <BarChart
-                        data={scanFrequencyByDayChartData()}
-                        width={Dimensions.get('window').width - 32}
-                        height={220}
-                        yAxisLabel=""
-                        yAxisSuffix=""
-                        chartConfig={{
-                            backgroundColor: '#FFF',
-                            backgroundGradientFrom: '#FFF',
-                            backgroundGradientTo: '#FFF',
-                            decimalPlaces: 0,
-                            color: (opacity = 1) => `#3674B5`,
-                            labelColor: (opacity = 1) => `#3E4241`,
-                        }}
-                        style={{ marginVertical: 8, borderRadius: 16 }}
-                    />
+                    <ScrollView horizontal>
+                        <BarChart
+                            data={scanFrequencyByDayChartData()}
+                            width={Dimensions.get('window').width - 32}
+                            height={220}
+                            yAxisLabel=""
+                            yAxisSuffix=""
+                            chartConfig={{
+                                backgroundColor: colors.cardBackground,
+                                backgroundGradientFrom: colors.cardBackground,
+                                backgroundGradientTo: colors.cardBackground,
+                                decimalPlaces: 0,
+                                color: (opacity = 1) => colors.primary,
+                                labelColor: (opacity = 1) => colors.text,
+                            }}
+                            style={{ marginVertical: 8, borderRadius: 16 }}
+                        />
+                    </ScrollView>
                 </View>
             )}
 
-            {/* Stacked Bar Chart: Condition by Confidence Range */}
             {conditionByConfidence.length > 0 && (
                 <View style={styles.chartSection}>
                     <Text style={styles.chartTitle}>Condition by Confidence Range</Text>
-                    <StackedBarChart
-                        data={conditionByConfidenceChartData()}
-                        width={Dimensions.get('window').width - 32}
-                        height={220}
-                        chartConfig={{
-                            backgroundColor: '#FFF',
-                            backgroundGradientFrom: '#FFF',
-                            backgroundGradientTo: '#FFF',
-                            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                            labelColor: (opacity = 1) => `#3E4241`,
-                        }}
-                        style={{ marginVertical: 8, borderRadius: 16 }}
-                        hideLegend={false}
-                    />
+                    <ScrollView horizontal>
+                        <StackedBarChart
+                            data={conditionByConfidenceChartData()}
+                            width={Dimensions.get('window').width - 32}
+                            height={220}
+                            chartConfig={{
+                                backgroundColor: colors.cardBackground,
+                                backgroundGradientFrom: colors.cardBackground,
+                                backgroundGradientTo: colors.cardBackground,
+                                color: (opacity = 1) => colors.text,
+                                labelColor: (opacity = 1) => colors.text,
+                            }}
+                            style={{ marginVertical: 8, borderRadius: 16 }}
+                            hideLegend={false}
+                        />
+                    </ScrollView>
                 </View>
             )}
 
-            {/* Scan History List for Comparison
-            <View style={styles.historySection}>
-                <Text style={styles.subHeader}>Select Records to Compare Confidence</Text>
-                {historyResponse && (
-                    <FlatList
-                        data={historyResponse.data}
-                        renderItem={renderScanRecord}
-                        keyExtractor={(item) => item._id}
-                        ListEmptyComponent={<Text style={styles.emptyText}>No scan history found.</Text>}
-                        onEndReached={loadMore}
-                        onEndReachedThreshold={0.5}
-                        ListFooterComponent={loading ? <Text style={styles.loadingText}>Loading...</Text> : null}
-                        style={styles.historyList}
-                    />
-                )}
-            </View> */}
-
-            {/* Confidence Comparison Chart */}
-            {/* {selectedRecords.length === 2 && (
-                <View style={styles.chartSection}>
-                    <View style={styles.comparisonHeader}>
-                        <Text style={styles.chartTitle}>Confidence Comparison</Text>
-                        <TouchableOpacity onPress={closeComparison} style={styles.closeButton}>
-                            <Icon name="close" size={24} color="#3E4241" />
-                        </TouchableOpacity>
-                    </View>
-                    <BarChart
-                        data={confidenceComparisonChartData()}
-                        width={Dimensions.get('window').width - 32}
-                        height={220}
-                        yAxisLabel=""
-                        yAxisSuffix="%"
-                        chartConfig={{
-                            backgroundColor: '#FFF',
-                            backgroundGradientFrom: '#FFF',
-                            backgroundGradientTo: '#FFF',
-                            decimalPlaces: 1,
-                            color: (opacity = 1) => `#3674B5`,
-                            labelColor: (opacity = 1) => `#3E4241`,
-                        }}
-                        style={{ marginVertical: 8, borderRadius: 16 }}
-                    />
-                </View>
-            )} */}
-
-            {/* Snackbar */}
             <View style={styles.snackbarContainer}>
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
                     style={{
-                        backgroundColor: snackbarType === 'success' ? 'green' : 'red',
+                        backgroundColor: snackbarType === 'success' ? colors.success : colors.error,
                         borderRadius: 8,
                         padding: 10,
                         marginHorizontal: 10,
                     }}
                 >
-                    {snackbarMessage}
+                    <Text style={styles.snackbarText}>{snackbarMessage}</Text>
                 </Snackbar>
             </View>
         </ScrollView>
@@ -475,7 +410,7 @@ const ChartsDashboard = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FBF8EF',
+        backgroundColor: colors.background,
     },
     headerContainer: {
         flexDirection: 'row',
@@ -483,14 +418,10 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 8,
     },
-    backButton: {
-        padding: 8,
-        marginRight: 8,
-    },
     header: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#3E4241',
+        color: colors.text,
     },
     chartSection: {
         padding: 16,
@@ -498,65 +429,37 @@ const styles = StyleSheet.create({
     chartTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 8,
     },
-    historySection: {
-        padding: 16,
-    },
-    subHeader: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#3E4241',
-        marginBottom: 10,
-    },
-    comparisonHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    closeButton: {
-        padding: 8,
-    },
-    historyList: {
-        flex: 1,
-    },
     recordCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: colors.cardBackground,
         padding: 12,
         borderRadius: 8,
         marginBottom: 8,
-        shadowColor: '#000',
+        shadowColor: colors.shadow || '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: 5,
         elevation: 3,
-    },
-    selectedRecord: {
-        borderColor: '#3674B5',
-        borderWidth: 2,
     },
     recordText: {
         fontSize: 16,
-        color: '#3E4241',
+        color: colors.text,
         marginBottom: 4,
     },
-    emptyText: {
-        textAlign: 'center',
-        color: '#888',
-        marginTop: 20,
-    },
-    loadingText: {
-        textAlign: 'center',
-        color: '#888',
-        padding: 10,
+    selectedRecord: {
+        borderWidth: 2,
+        borderColor: colors.primary,
     },
     snackbarContainer: {
         position: 'absolute',
         bottom: 5,
         left: 0,
         right: 0,
+    },
+    snackbarText: {
+        color: colors.cardBackground,
     },
 });
 

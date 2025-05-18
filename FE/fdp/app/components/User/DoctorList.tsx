@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { auth, db } from '../../firebase/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import Modal from 'react-native-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { colors } from '../../config/colors';
+
+interface Doctor {
+    _id?: string;
+    firebase_uid: string;
+    first_name: string;
+    last_name: string;
+    contact_no: string;
+    specialization: string;
+    years_experience: number;
+    skin_type: string;
+    doctor_reg_no: string;
+}
 
 const SearchDoctorsScreen = () => {
     const router = useRouter();
@@ -185,119 +198,104 @@ const SearchDoctorsScreen = () => {
         }
     };
 
-    interface Doctor {
-        _id?: string;
-        firebase_uid: string;
-        first_name: string;
-        last_name: string;
-        contact_no: string;
-        specialization: string;
-        years_experience: number;
-        skin_type: string;
-        doctor_reg_no: string;
-    }
-
     const renderDoctorCard = ({ item }: { item: Doctor }) => {
         const isExpanded = expandedCard === item.firebase_uid;
         const dummyImage = 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
         return (
-            <View key={item.firebase_uid} className="mb-4 p-4 bg-white rounded-lg shadow-md">
-                <View className="flex-row items-center">
-                    <Image source={{ uri: dummyImage }} className="w-16 h-16 rounded-full mr-4" />
-                    <View>
-                        <Text className="text-lg font-semibold text-[#3E4241]">
-                            {item.first_name} {item.last_name}
-                        </Text>
-                        <Text className="text-gray-600">{item.contact_no}</Text>
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Image source={{ uri: dummyImage }} style={styles.doctorImage} />
+                    <View style={styles.doctorInfo}>
+                        <Text style={styles.doctorName}>{item.first_name} {item.last_name}</Text>
+                        <Text style={styles.doctorContact}>{item.contact_no}</Text>
                     </View>
                 </View>
                 {isExpanded && (
-                    <View className="mt-4">
-                        <Text className="text-gray-700">Specialization: {item.specialization || 'N/A'}</Text>
-                        <Text className="text-gray-700">Years of Experience: {item.years_experience || 'N/A'}</Text>
-                        <Text className="text-gray-700">Skin Type: {item.skin_type || 'N/A'}</Text>
+                    <View style={styles.expandedContent}>
+                        <Text style={styles.detailText}>Specialization: {item.specialization || 'N/A'}</Text>
+                        <Text style={styles.detailText}>Years of Experience: {item.years_experience || 'N/A'}</Text>
+                        {/* <Text style={styles.detailText}>Skin Type: {item.skin_type || 'N/A'}</Text> */}
                     </View>
                 )}
-                <View className="flex-row justify-between mt-4">
-                    <TouchableOpacity onPress={() => toggleCard(item.firebase_uid)} className="bg-[#3674B5] p-2 rounded-lg">
-                        <Text className="text-white text-sm">{isExpanded ? 'See Less' : 'See More'}</Text>
+                <View style={styles.cardActions}>
+                    <TouchableOpacity onPress={() => toggleCard(item.firebase_uid)} style={styles.toggleButton}>
+                        <Text style={styles.toggleButtonText}>{isExpanded ? 'See Less' : 'See More'}</Text>
                     </TouchableOpacity>
-                    <View className="flex-row space-x-2">
-                        <TouchableOpacity onPress={() => initiateChat(item)} className="bg-gray-300 p-2 rounded-lg">
-                            <Text className="text-black text-sm">Chat</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => openAppointmentModal(item)} className="bg-gray-300 p-2 rounded-lg">
-                            <Text className="text-black text-sm">Appointment</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity onPress={() => initiateChat(item)} style={styles.actionButton}>
+                        <Text style={styles.actionButtonText}>Chat</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => openAppointmentModal(item)} style={styles.actionButton}>
+                        <Text style={styles.actionButtonText}>Appointment</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
     };
 
     return (
-        <View className="flex-1 bg-[#FBF8EF] p-4">
-            <Text className="text-4xl font-extrabold text-[#3E4241] text-center mb-4">Search Doctors</Text>
+        <View style={styles.container}>
+            <Text style={styles.header}>Search Doctors</Text>
             <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 placeholder="Search by name or specialization..."
-                placeholderTextColor="#888"
-                className="border border-gray-300 rounded-lg py-3 px-4 mb-4 bg-white shadow-sm"
+                placeholderTextColor={colors.inactiveTint}
+                style={styles.searchBar}
             />
             {isLoading ? (
-                <Text className="text-center text-gray-500">Loading...</Text>
+                <Text style={styles.loadingText}>Loading...</Text>
             ) : (
                 <FlatList
                     data={doctors}
                     renderItem={renderDoctorCard}
                     keyExtractor={(item) => item.firebase_uid}
-                    ListEmptyComponent={<Text className="text-center text-gray-500">No doctors found</Text>}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No doctors found</Text>}
+                    contentContainerStyle={styles.listContent}
                 />
             )}
             {totalDoctors > 0 && !isLoading && (
-                <View className="flex-row justify-between mt-4">
+                <View style={styles.pagination}>
                     <TouchableOpacity
                         onPress={() => paginate(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="bg-[#3674B5] p-2 rounded-lg disabled:opacity-50"
+                        style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
                     >
-                        <Text className="text-white text-sm">Previous</Text>
+                        <Text style={styles.paginationButtonText}>Previous</Text>
                     </TouchableOpacity>
-                    <Text className="text-gray-700">Page {currentPage} of {totalPages}</Text>
+                    <Text style={styles.paginationText}>Page {currentPage} of {totalPages}</Text>
                     <TouchableOpacity
                         onPress={() => paginate(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="bg-[#3674B5] p-2 rounded-lg disabled:opacity-50"
+                        style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
                     >
-                        <Text className="text-white text-sm">Next</Text>
+                        <Text style={styles.paginationButtonText}>Next</Text>
                     </TouchableOpacity>
                 </View>
             )}
-            <View className="absolute bottom-5 left-0 right-0">
+            <View style={styles.snackbarContainer}>
                 <Snackbar
                     visible={snackbarVisible}
                     onDismiss={() => setSnackbarVisible(false)}
                     duration={Snackbar.DURATION_SHORT}
-                    style={{ backgroundColor: snackbarType === 'success' ? 'green' : 'red', borderRadius: 8, padding: 10, marginHorizontal: 10 }}
+                    style={{ backgroundColor: snackbarType === 'success' ? colors.success : colors.error, borderRadius: 8 }}
                 >
-                    {snackbarMessage}
+                    <Text style={styles.snackbarText}>{snackbarMessage}</Text>
                 </Snackbar>
             </View>
             <Modal isVisible={isModalVisible} onBackdropPress={() => setModalVisible(false)}>
-                <View className="bg-white p-6 rounded-lg">
-                    <Text className="text-lg font-bold mb-4">Create Appointment</Text>
-                    <Text className="mb-2">Doctor: {selectedDoctor ? `${selectedDoctor.first_name} ${selectedDoctor.last_name}` : ''}</Text>
-                    <Text className="mb-2">User: {userName}</Text>
-                    <TouchableOpacity onPress={() => setDatePickerVisible(true)} className="bg-gray-200 p-2 rounded-lg mb-2">
-                        <Text>{selectedDate ? selectedDate.toISOString().split('T')[0] : 'Select Date'}</Text>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Create Appointment</Text>
+                    <Text style={styles.modalText}>Doctor: {selectedDoctor ? `${selectedDoctor.first_name} ${selectedDoctor.last_name}` : ''}</Text>
+                    <Text style={styles.modalText}>User: {userName}</Text>
+                    <TouchableOpacity onPress={() => setDatePickerVisible(true)} style={styles.dateButton}>
+                        <Text style={styles.dateButtonText}>{selectedDate ? selectedDate.toISOString().split('T')[0] : 'Select Date'}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setTimePickerVisible(true)} className="bg-gray-200 p-2 rounded-lg mb-4">
-                        <Text>{selectedTime ? selectedTime.toTimeString().split(' ')[0].slice(0, 5) : 'Select Time'}</Text>
+                    <TouchableOpacity onPress={() => setTimePickerVisible(true)} style={styles.timeButton}>
+                        <Text style={styles.timeButtonText}>{selectedTime ? selectedTime.toTimeString().split(' ')[0].slice(0, 5) : 'Select Time'}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={submitAppointment} className="bg-[#3674B5] p-3 rounded-lg">
-                        <Text className="text-white text-center">Submit Appointment</Text>
+                    <TouchableOpacity onPress={submitAppointment} style={styles.submitButton}>
+                        <Text style={styles.submitButtonText}>Submit Appointment</Text>
                     </TouchableOpacity>
                 </View>
                 <DateTimePickerModal
@@ -317,5 +315,199 @@ const SearchDoctorsScreen = () => {
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+        padding: 16,
+    },
+    header: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: colors.text,
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    searchBar: {
+        height: 48,
+        borderColor: colors.inactiveTint,
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        marginBottom: 16,
+        backgroundColor: colors.cardBackground,
+        color: colors.text,
+    },
+    card: {
+        backgroundColor: colors.cardBackground,
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    doctorImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        marginRight: 12,
+    },
+    doctorInfo: {
+        flex: 1,
+    },
+    doctorName: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: colors.text,
+    },
+    doctorContact: {
+        fontSize: 14,
+        color: colors.inactiveTint,
+    },
+    expandedContent: {
+        marginTop: 12,
+    },
+    detailText: {
+        fontSize: 14,
+        color: colors.inactiveTint,
+        marginBottom: 8,
+    },
+    cardActions: {
+        flexDirection: 'column',
+        gap: 8,
+        marginTop: 12,
+    },
+    toggleButton: {
+        backgroundColor: colors.primary,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    toggleButtonText: {
+        color: colors.cardBackground,
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    actionButton: {
+        backgroundColor: colors.secondary,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    actionButtonText: {
+        color: colors.text,
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    listContent: {
+        paddingBottom: 16,
+    },
+    loadingText: {
+        textAlign: 'center',
+        color: colors.inactiveTint,
+        fontSize: 16,
+    },
+    emptyText: {
+        textAlign: 'center',
+        color: colors.inactiveTint,
+        fontSize: 16,
+        paddingVertical: 20,
+    },
+    pagination: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 16,
+    },
+    paginationButton: {
+        backgroundColor: colors.primary,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    disabledButton: {
+        backgroundColor: colors.inactiveTint,
+    },
+    paginationButtonText: {
+        color: colors.cardBackground,
+        fontSize: 14,
+    },
+    paginationText: {
+        fontSize: 14,
+        color: colors.text,
+    },
+    snackbarContainer: {
+        position: 'absolute',
+        bottom: 10,
+        left: 10,
+        right: 10,
+    },
+    snackbarText: {
+        color: colors.cardBackground,
+    },
+    modalContainer: {
+        backgroundColor: colors.cardBackground,
+        borderRadius: 12,
+        padding: 20,
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: 16,
+    },
+    modalText: {
+        fontSize: 16,
+        color: colors.inactiveTint,
+        marginBottom: 12,
+    },
+    dateButton: {
+        backgroundColor: colors.secondary,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    dateButtonText: {
+        color: colors.text,
+        fontSize: 16,
+    },
+    timeButton: {
+        backgroundColor: colors.secondary,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    timeButtonText: {
+        color: colors.text,
+        fontSize: 16,
+    },
+    submitButton: {
+        backgroundColor: colors.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    submitButtonText: {
+        color: colors.cardBackground,
+        fontSize: 16,
+        textAlign: 'center',
+    },
+});
 
 export default SearchDoctorsScreen;
