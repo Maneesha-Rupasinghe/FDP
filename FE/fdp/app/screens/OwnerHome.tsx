@@ -15,6 +15,7 @@ import UserAppointmentCalendar from '../components/User/UserAppointmentCalendar'
 import FaceDiseaseScanner from '../components/User/FaceDiseasesScanner';
 import ScanHistoryDashboard from '../components/User/ScanHistoryDashboard';
 import ChartsDashboard from '../components/User/ChartsDashboard';
+import DoctorMapView from '../components/User/DoctporMapView';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -158,11 +159,11 @@ const OwnerTabNavigator = () => {
           },
         }}
       />
-      {/* <Tab.Screen
-        name="ChartsDashboard"
-        component={ChartsDashboard}
+      <Tab.Screen
+        name="T"
+        component={DoctorMapView}
         options={{ title: 'Charts' }}
-      /> */}
+      />
 
       <Tab.Screen
         name="scanhistory"

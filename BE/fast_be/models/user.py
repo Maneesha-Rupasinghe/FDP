@@ -41,6 +41,8 @@ class UserUpdate(BaseModel):
     skin_type: Optional[str] = None
     specialization: Optional[str] = None
     years_experience: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class UserResponse(BaseModel):
@@ -51,6 +53,8 @@ class UserResponse(BaseModel):
     specialization: Optional[str] = None
     years_experience: Optional[int] = None
     skin_type: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     doctor_reg_no: Optional[str] = None
     firebase_uid: str
     role: str

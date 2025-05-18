@@ -29,6 +29,8 @@ class UserUpdate(BaseModel):
     skin_type: Optional[str] = None
     specialization: Optional[str] = None
     years_experience: Optional[int] = None
+    latitude: Optional[float] = None  # New field for latitude
+    longitude: Optional[float] = None  # New field for longitude
 
 
 class UserResponse(BaseModel):
@@ -42,6 +44,8 @@ class UserResponse(BaseModel):
     doctor_reg_no: Optional[str] = None
     firebase_uid: str
     role: str
+    latitude: Optional[float] = None  # New field for latitude
+    longitude: Optional[float] = None  # New field for longitude
 
 
 class SearchDoctorsResponse(BaseModel):
@@ -100,7 +104,20 @@ async def get_user(firebase_uid: str):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         user["_id"] = str(user["_id"])
-        return user
+        return UserResponse(
+            _id=user["_id"],
+            first_name=user.get("first_name"),
+            last_name=user.get("last_name"),
+            contact_no=user.get("contact_no"),
+            specialization=user.get("specialization"),
+            years_experience=user.get("years_experience"),
+            skin_type=user.get("skin_type"),
+            doctor_reg_no=user.get("doctor_reg_no"),
+            firebase_uid=user.get("firebase_uid"),
+            role=user.get("role"),
+            latitude=user.get("latitude"),
+            longitude=user.get("longitude"),
+        )
     except Exception as e:
         logger.error(f"Exception in get_user: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
@@ -111,6 +128,12 @@ async def update_user(firebase_uid: str, update_data: UserUpdate):
     update_dict = update_data.dict(exclude_unset=True)
     if not update_dict:
         raise HTTPException(status_code=400, detail="No data provided for update")
+
+    # Validate latitude and longitude if provided
+    if "latitude" in update_dict and (update_dict["latitude"] < -90 or update_dict["latitude"] > 90):
+        raise HTTPException(status_code=400, detail="Latitude must be between -90 and 90")
+    if "longitude" in update_dict and (update_dict["longitude"] < -180 or update_dict["longitude"] > 180):
+        raise HTTPException(status_code=400, detail="Longitude must be between -180 and 180")
 
     result = await db.users.update_one(
         {"firebase_uid": {"$regex": f"^{firebase_uid}$", "$options": "i"}},
@@ -155,18 +178,20 @@ async def search_doctors(q: str = "", page: int = 1, limit: int = 5):
         doctors = await db.users.find(query).skip(skip).limit(limit).to_list(limit)
         return {
             "doctors": [
-                {
-                    "_id": str(doc["_id"]),
-                    "first_name": doc.get("first_name"),
-                    "last_name": doc.get("last_name"),
-                    "contact_no": doc.get("contact_no"),
-                    "specialization": doc.get("specialization"),
-                    "years_experience": doc.get("years_experience"),
-                    "skin_type": doc.get("skin_type"),
-                    "doctor_reg_no": doc.get("doctor_reg_no"),
-                    "firebase_uid": doc.get("firebase_uid"),
-                    "role": doc.get("role"),
-                }
+                UserResponse(
+                    _id=str(doc["_id"]),
+                    first_name=doc.get("first_name"),
+                    last_name=doc.get("last_name"),
+                    contact_no=doc.get("contact_no"),
+                    specialization=doc.get("specialization"),
+                    years_experience=doc.get("years_experience"),
+                    skin_type=doc.get("skin_type"),
+                    doctor_reg_no=doc.get("doctor_reg_no"),
+                    firebase_uid=doc.get("firebase_uid"),
+                    role=doc.get("role"),
+                    latitude=doc.get("latitude"),
+                    longitude=doc.get("longitude"),
+                )
                 for doc in doctors
             ],
             "total": total,

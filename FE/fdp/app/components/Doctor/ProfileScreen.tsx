@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Platform, Modal } from 'react-native';
 import { Snackbar } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import { auth } from '../../firebase/firebase';
 import { signOut, deleteUser } from 'firebase/auth';
 import { Link, useRouter } from 'expo-router';
+import MapView, { Marker } from 'react-native-maps';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const DoctorProfileScreen = () => {
   const router = useRouter();
@@ -16,12 +18,15 @@ const DoctorProfileScreen = () => {
   const [specialization, setSpecialization] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
   const [skinType, setSkinType] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
+  const [mapModalVisible, setMapModalVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
-  // List of skin types for the dropdown
   const skinTypes = [
     { label: 'Select Skin Type', value: '' },
     { label: 'Normal', value: 'normal' },
@@ -31,7 +36,13 @@ const DoctorProfileScreen = () => {
     { label: 'Sensitive', value: 'sensitive' },
   ];
 
-  // Fetch doctor profile on mount
+  const initialRegion = {
+    latitude: 7.8731,
+    longitude: 80.7718,
+    latitudeDelta: 4.0,
+    longitudeDelta: 4.0,
+  };
+
   useEffect(() => {
     if (!user) {
       showSnackbar('User not authenticated', 'error');
@@ -62,6 +73,14 @@ const DoctorProfileScreen = () => {
           setSpecialization(responseData.specialization || '');
           setYearsExperience(responseData.years_experience ? String(responseData.years_experience) : '');
           setSkinType(responseData.skin_type || '');
+          setLatitude(responseData.latitude ? String(responseData.latitude) : '');
+          setLongitude(responseData.longitude ? String(responseData.longitude) : '');
+          if (responseData.latitude && responseData.longitude) {
+            setSelectedLocation({
+              latitude: parseFloat(responseData.latitude),
+              longitude: parseFloat(responseData.longitude),
+            });
+          }
         }
       } catch (error: any) {
         console.error('Fetch profile error:', error.message);
@@ -72,7 +91,6 @@ const DoctorProfileScreen = () => {
     fetchDoctorProfile();
   }, []);
 
-  // Update doctor profile
   const handleUpdateProfile = async () => {
     if (!user) {
       showSnackbar('User not authenticated', 'error');
@@ -93,6 +111,8 @@ const DoctorProfileScreen = () => {
           specialization,
           years_experience: yearsExperience ? parseInt(yearsExperience) : null,
           skin_type: skinType,
+          latitude: latitude ? parseFloat(latitude) : null,
+          longitude: longitude ? parseFloat(longitude) : null,
         }),
       });
       const responseData = await response.json();
@@ -107,7 +127,6 @@ const DoctorProfileScreen = () => {
     setIsLoading(false);
   };
 
-  // Sign out
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -119,7 +138,6 @@ const DoctorProfileScreen = () => {
     }
   };
 
-  // Delete account
   const handleDeleteAccount = async () => {
     if (!user) {
       showSnackbar('User not authenticated', 'error');
@@ -160,6 +178,22 @@ const DoctorProfileScreen = () => {
         },
       ]
     );
+  };
+
+  const handleMapPress = (event: any) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setSelectedLocation({ latitude, longitude });
+    setLatitude(latitude.toFixed(6));
+    setLongitude(longitude.toFixed(6));
+  };
+
+  const validateCoordinate = (value: string, setValue: (value: string) => void) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) {
+      setValue('');
+    } else {
+      setValue(num.toFixed(6));
+    }
   };
 
   const showSnackbar = (message: string, type: 'success' | 'error') => {
@@ -244,23 +278,71 @@ const DoctorProfileScreen = () => {
             />
           </View>
 
-          {/* <View className="mt-6 w-full">
-            <Text className="text-lg text-gray-700 mb-2">Skin Type</Text>
-            <View className="border border-gray-300 rounded-lg bg-white shadow-sm">
-              <Picker
-                selectedValue={skinType}
-                onValueChange={(itemValue) => setSkinType(itemValue)}
-                style={{
-                  height: Platform.OS === 'ios' ? 150 : 50,
-                  width: '100%',
-                }}
-              >
-                {skinTypes.map((type, index) => (
-                  <Picker.Item key={index} label={type.label} value={type.value} />
-                ))}
-              </Picker>
+          <View className="mt-6 w-full">
+            <Text className="text-lg text-gray-700 mb-2">Latitude</Text>
+            <TextInput
+              value={latitude}
+              onChangeText={(text) => setLatitude(text)}
+              onBlur={() => validateCoordinate(latitude, setLatitude)}
+              placeholder="Latitude (e.g., 6.9271)"
+              placeholderTextColor="#888"
+              keyboardType="numeric"
+              className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+            />
+          </View>
+
+          <View className="mt-6 w-full">
+            <Text className="text-lg text-gray-700 mb-2">Longitude</Text>
+            <TextInput
+              value={longitude}
+              onChangeText={(text) => setLongitude(text)}
+              onBlur={() => validateCoordinate(longitude, setLongitude)}
+              placeholder="Longitude (e.g., 79.8612)"
+              placeholderTextColor="#888"
+              keyboardType="numeric"
+              className="border border-gray-300 rounded-lg py-3 px-4 w-full text-lg bg-white shadow-sm"
+            />
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setMapModalVisible(true)}
+            className="mt-6 bg-[#FF9800] p-4 w-full rounded-lg items-center"
+          >
+            <Text className="text-white text-lg font-semibold">Set Location on Map</Text>
+          </TouchableOpacity>
+
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={mapModalVisible}
+            onRequestClose={() => setMapModalVisible(false)}
+          >
+            <View className="flex-1 bg-black bg-opacity-50 justify-center items-center">
+              <View className="bg-white rounded-lg p-4 w-[90%] h-[70%] shadow-lg">
+                <View className="flex-row justify-between items-center mb-4">
+                  <Text className="text-xl font-bold text-[#3E4241]">Pin Your Location</Text>
+                  <TouchableOpacity onPress={() => setMapModalVisible(false)}>
+                    <Icon name="close" size={24} color="#3E4241" />
+                  </TouchableOpacity>
+                </View>
+                <MapView
+                  style={{ flex: 1, borderRadius: 8 }}
+                  initialRegion={initialRegion}
+                  onPress={handleMapPress}
+                >
+                  {selectedLocation && (
+                    <Marker coordinate={selectedLocation} title="Your Location" />
+                  )}
+                </MapView>
+                <TouchableOpacity
+                  onPress={() => setMapModalVisible(false)}
+                  className="mt-4 bg-[#3674B5] p-4 rounded-lg items-center"
+                >
+                  <Text className="text-white text-lg font-semibold">Confirm Location</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View> */}
+          </Modal>
 
           <TouchableOpacity
             onPress={handleUpdateProfile}
@@ -285,10 +367,6 @@ const DoctorProfileScreen = () => {
           >
             <Text className="text-white text-lg font-semibold">Delete Account</Text>
           </TouchableOpacity>
-
-          {/* <View className="flex flex-row justify-center mt-4 gap-x-2">
-            <Link className="text-[#3674B5] font-semibold" href={'/screens/VetHome'}>Back to Home</Link>
-          </View> */}
         </View>
       </ScrollView>
       <View className="absolute bottom-5 left-0 right-0">
