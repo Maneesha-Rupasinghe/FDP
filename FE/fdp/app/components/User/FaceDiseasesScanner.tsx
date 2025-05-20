@@ -118,13 +118,13 @@ const FaceDiseaseScanner = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Face Disease Scanner</Text>
-            {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.image} />
-            ) : (
-                <View style={styles.placeholder}>
-                    <Text style={styles.placeholderText}>No Image Selected</Text>
-                </View>
-            )}
+            <Image
+                source={imageUri ? { uri: imageUri } : require('../../../assets/images/NoImage.jpg')}
+                style={styles.image}
+                resizeMode="cover"
+            />
+
+
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.button} onPress={pickImage} disabled={loading}>
                     <Text style={styles.buttonText}>Upload Image</Text>

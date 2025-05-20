@@ -76,7 +76,7 @@ const OwnerTabNavigator = () => {
         component={AppointmentsScreen}
         options={{
           tabBarLabel: 'Appointments',
-          tabBarIcon: ({ color, size }) => <Icon name="user" size={size + 4} color={color} />,
+          tabBarIcon: ({ color, size }) => <Icon name="calendar" size={size + 4} color={color} />,
           headerTitle: 'Appointments',
           headerTitleStyle: {
             fontSize: 28,

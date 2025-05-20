@@ -140,8 +140,8 @@ const RegisterScreen = ({ navigation }: any) => {
 
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: colors.background }} showsVerticalScrollIndicator={false}>
-            <View style={{ padding: 16, alignItems: 'center' }}>
-                <View style={{ width: '100%', marginTop: 20 }}>
+            <View style={{ alignItems: 'center' }}>
+                <View style={{ width: '100%', marginTop: 20 }} className='px-[16px] py-[16px]'>
                     <Image
                         source={getRoleImage()}
                         style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden' }}
