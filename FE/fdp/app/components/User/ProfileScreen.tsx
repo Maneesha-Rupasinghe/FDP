@@ -247,7 +247,7 @@ const UserProfileScreen = () => {
 
                     <TouchableOpacity
                         onPress={handleUpdateProfile}
-                        className="mt-8 bg-[#3674B5] p-4 w-full rounded-lg items-center"
+                        className="mt-8 bg-[#626F47] p-4 w-full rounded-lg items-center"
                         disabled={isLoading}
                     >
                         <Text className="text-white text-lg font-semibold">Update Profile</Text>
@@ -255,7 +255,7 @@ const UserProfileScreen = () => {
 
                     <TouchableOpacity
                         onPress={handleSignOut}
-                        className="mt-4 bg-gray-500 p-4 w-full rounded-lg items-center"
+                        className="mt-4 bg-[#A4B465] p-4 w-full rounded-lg items-center"
                         disabled={isLoading}
                     >
                         <Text className="text-white text-lg font-semibold">Sign Out</Text>
