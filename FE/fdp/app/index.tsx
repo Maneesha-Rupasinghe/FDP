@@ -1,17 +1,27 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import LoginScreen from './screens/LoginScreen'
-import "../global.css"
-import RegisterScreen from './screens/RegisterScreen'
+import { View } from 'react-native';
+import React, { useState } from 'react';
+import RegisterScreen from './screens/RegisterScreen';
+import IntroVideo from './screens/IntroVideo'; // Make sure path is correct
+import '../global.css';
 
 const Index = () => {
-    return (
-        <View className='px-[16px] py-[16px]'>
-            {/* <LoginScreen /> */}
-            <RegisterScreen />
-            {/* <Text className='text-red-600'>Hello</Text> */}
-        </View>
-    )
-}
+    const [showIntro, setShowIntro] = useState(true);
 
-export default Index
+    const handleIntroFinish = () => {
+        setShowIntro(false);
+    };
+
+    return (
+        <View className="flex-1">
+            {showIntro ? (
+                <IntroVideo onFinish={handleIntroFinish} />
+            ) : (
+                <View className="">
+                    <RegisterScreen />
+                </View>
+            )}
+        </View>
+    );
+};
+
+export default Index;
