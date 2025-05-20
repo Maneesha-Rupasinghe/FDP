@@ -5,6 +5,7 @@ import ProfileScreen from '../components/Doctor/ProfileScreen';
 import VetAppointments from '../components/Doctor/AppointmentScreen';
 import DoctorChatListScreen from '../components/Doctor/DoctorChatListScreen';
 import { colors } from '../config/colors';
+import DoctorAppointmentCalendar from '../components/Doctor/DoctorAppointmentCalendar';
 
 const Tab = createBottomTabNavigator();
 
@@ -53,6 +54,25 @@ const VetHome = () => {
         },
       }}
     >
+        <Tab.Screen
+        name="Home"
+        component={DoctorAppointmentCalendar}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="home" size={size + 4} color={color} />
+          ),
+          headerTitle: 'Home ',
+          headerTitleStyle: {
+            fontSize: 28,
+            fontWeight: 'bold',
+            color: '#FFF', // Ensure contrast with new background
+            textTransform: 'uppercase',
+            letterSpacing: 2,
+            textDecorationLine: 'underline', // Underline per screen (optional override)
+          },
+        }}
+      />
       <Tab.Screen
         name="Appointments"
         component={VetAppointments}
@@ -91,6 +111,7 @@ const VetHome = () => {
           },
         }}
       />
+     
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
